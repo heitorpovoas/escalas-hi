@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escala UTI — Hospital de Ilhéus [Leitura]</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --white: #ffffff;
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f5;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+  --blue-50:  #e7f5ff;
+  --blue-400: #74c0fc;
+  --blue-500: #339af0;
+  --blue-600: #228be6;
+  --blue-700: #1c7ed6;
+  --teal-50:  #e6fcf5;
+  --teal-600: #0ca678;
+  --teal-700: #099268;
+  --font: 'Inter', system-ui, sans-serif;
+  --radius: 8px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+
+body {
+  font-family: var(--font);
+  background: var(--gray-50);
+  color: var(--gray-900);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── HEADER (idêntico à Agenda) ── */
+.header {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px; position: sticky; top: 0; z-index: 50;
+  box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-badge {
+  background: var(--blue-600); color: white;
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+}
+.header-title { font-size: 16px; font-weight: 600; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+/* ── CONTROLS (idêntico à Agenda) ── */
+.controls {
+  background: var(--white); border-bottom: 1px solid var(--gray-200);
+  padding: 14px 28px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.month-nav { display: flex; align-items: center; gap: 8px; }
+.month-label { font-size: 15px; font-weight: 600; min-width: 180px; text-align: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font); font-size: 13px; font-weight: 500;
+  padding: 7px 14px; border-radius: var(--radius);
+  border: 1px solid var(--gray-300); background: var(--white);
+  color: var(--gray-700); cursor: pointer; transition: all .15s;
+}
+.btn:hover { background: var(--gray-100); }
+.btn-primary { background: var(--blue-600); border-color: var(--blue-600); color: white; }
+.btn-primary:hover { background: var(--blue-700); border-color: var(--blue-700); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.sep { width: 1px; height: 24px; background: var(--gray-200); }
+
+/* ── VIEW TOGGLE (idêntico à Agenda) ── */
+.view-toggle { display: flex; gap: 4px; }
+.view-btn {
+  padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
+  border: 1px solid var(--gray-300); background: var(--white); cursor: pointer;
+  font-family: var(--font); color: var(--gray-700); transition: all .15s;
+}
+.view-btn.active { background: var(--gray-900); border-color: var(--gray-900); color: white; }
+
+/* ── COUNTER BAR (substitui legend-bar da Agenda) ── */
+.counter-bar {
+  padding: 10px 28px; background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  min-height: 42px;
+}
+.counter-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--gray-500);
+}
+.counter-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; padding: 3px 11px; border-radius: 20px;
+}
+.counter-n {
+  background: rgba(0,0,0,.12); border-radius: 20px;
+  padding: 0 5px; font-size: 10px; font-weight: 700;
+}
+
+/* ── CALENDAR VIEW ── */
+.cal-wrap { padding: 20px 28px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-header-day {
+  text-align: center; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--gray-500); padding: 6px 0;
+}
+.cal-cell {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius); min-height: 90px;
+  cursor: pointer; transition: border-color .12s, box-shadow .12s;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.cal-cell:hover { border-color: var(--blue-400); box-shadow: 0 0 0 2px var(--blue-50); }
+.cal-cell.other-month { opacity: .35; pointer-events: none; }
+.cal-cell.today { border: 2px solid var(--blue-500); }
+.cal-cell.today .cal-day-num { color: var(--blue-600); }
+.cal-day-num { font-size: 11px; font-weight: 700; color: var(--gray-600); padding: 5px 7px 3px; flex-shrink: 0; }
+.cell-slots { display: flex; flex-direction: column; flex: 1; }
+.cell-slot {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 2px 4px; gap: 4px; min-height: 0;
+  border-top: 1px solid rgba(0,0,0,.06);
+  transition: filter .12s;
+  text-align: center;
+}
+.cell-slot:first-child { border-top: none; }
+.cal-cell:hover .cell-slot { filter: brightness(.97); }
+.slot-icon { font-size: 9px; flex-shrink: 0; opacity: 1; line-height: 1; }
+.slot-name { font-size: 10px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.slot-empty { font-size: 9px; opacity: .3; font-style: italic; }
+
+/* ── LIST VIEW ── */
+.list-wrap { padding: 16px 28px; }
+.list-week { margin-bottom: 20px; }
+.week-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--gray-500);
+  padding: 6px 0; margin-bottom: 6px;
+  border-bottom: 1px solid var(--gray-200);
+}
+.list-row {
+  display: grid; grid-template-columns: 90px 1fr 1fr;
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius); margin-bottom: 3px;
+  overflow: hidden; transition: box-shadow .12s;
+}
+.list-row:hover { box-shadow: var(--shadow-sm); }
+.list-row.today-row { border-color: var(--blue-400); background: var(--blue-50); }
+.list-date {
+  padding: 10px 12px; border-right: 1px solid var(--gray-100);
+  display: flex; flex-direction: column; justify-content: center;
+}
+.list-date-num { font-size: 18px; font-weight: 700; line-height: 1; color: var(--gray-900); }
+.list-date-day { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--gray-500); margin-top: 2px; }
+.today-row .list-date-num { color: var(--blue-600); }
+.list-slot {
+  padding: 8px 12px; border-right: 1px solid var(--gray-100);
+  cursor: pointer; transition: background .12s;
+}
+.list-slot:last-child { border-right: none; }
+.list-slot:hover { background: var(--gray-50); }
+.slot-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; margin-bottom: 4px;
+}
+.slot-label.dia   { color: var(--teal-600); }
+.slot-label.noite { color: var(--blue-600); }
+.slot-empty { font-size: 12px; color: var(--gray-400); font-style: italic; }
+.slot-doc {
+  font-size: 13px; font-weight: 600; color: var(--gray-800);
+  display: inline-block; padding: 2px 10px; border-radius: 20px; margin-top: 2px;
+}
+
+/* ── MODAL (idêntico à Agenda, adaptado) ── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.3); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--white); border-radius: 14px; padding: 28px;
+  width: 420px; max-width: 95vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,.12);
+}
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+.modal-sub   { font-size: 12px; color: var(--gray-600); margin-bottom: 22px; }
+.form-group  { margin-bottom: 16px; }
+.form-label  {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--gray-600); margin-bottom: 7px;
+  display: flex; align-items: center; gap: 6px;
+}
+.form-label-dot { width: 8px; height: 8px; border-radius: 50%; }
+.form-input {
+  width: 100%; border: 1px solid var(--gray-300); border-radius: var(--radius);
+  padding: 9px 12px; font-family: var(--font); font-size: 13px;
+  outline: none; transition: border-color .15s;
+}
+.form-input:focus { border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-50); }
+.quick-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.chip {
+  font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+  border: 1px solid transparent; cursor: pointer;
+  font-family: var(--font); transition: all .1s;
+}
+.chip:hover { opacity: .85; border-color: rgba(0,0,0,.15); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* ── TOAST (idêntico à Agenda) ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--gray-900); color: white;
+  padding: 11px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  z-index: 999; opacity: 0; transform: translateY(8px);
+  transition: all .2s; pointer-events: none; box-shadow: var(--shadow);
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+@media print {
+  .header-right, .btn, .overlay, .toast, .view-toggle { display: none !important; }
+  .cal-wrap, .list-wrap { padding: 0; }
+  body { background: white; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <span class="header-badge">UTI</span>
+    <span class="header-title">Escala — Hospital de Ilhéus</span>
+  </div>
+  <div class="header-right"><span id="last-updated" style="font-size:12px;color:#6c757d"></span></div>
+</header>
+
+<div style="background:#e7f5ff;border-bottom:1px solid #74c0fc;padding:8px 28px;font-size:12px;font-weight:500;color:#1c7ed6">🔒 Visualização somente leitura</div>
+<div class="controls">
+  <div class="month-nav">
+    <button class="btn btn-sm" onclick="changeMonth(-1)">‹ Anterior</button>
+    <div class="month-label" id="month-label"></div>
+    <button class="btn btn-sm" onclick="changeMonth(1)">Próximo ›</button>
+  </div>
+  <div class="sep"></div>
+  <button class="btn btn-sm" onclick="goToday()">Hoje</button>
+  <div class="sep"></div>
+  <button class="btn btn-sm btn-primary" onclick="ensureMonth()">+ Novo mês</button>
+  <div class="sep"></div>
+  <div class="view-toggle">
+    <button class="view-btn active" id="btn-cal" onclick="setView('cal')">📅 Calendário</button>
+    <button class="view-btn" id="btn-list" onclick="setView('list')">☰ Lista</button>
+  </div>
+</div>
+
+<div class="counter-bar" id="counter-bar">
+  <span class="counter-label">Turnos este mês:</span>
+</div>
+
+<div id="view-cal">
+  <div class="cal-wrap">
+    <div class="cal-grid" id="cal-header"></div>
+    <div class="cal-grid" id="cal-body" style="margin-top:4px"></div>
+  </div>
+</div>
+
+<div id="view-list" style="display:none">
+  <div class="list-wrap" id="list-body"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ──
+const KEY = 'uti_v4';
+const T_DIA   = '7 às 19 h';
+const T_NOITE = '19 às 7 h';
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DAYS_SHORT = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+const DAYS_FULL  = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const TODAY = new Date().toISOString().slice(0,10);
+
+// ── DOCTOR COLORS — 16 distinct light-bg pills ──
+const PALETTE = [
+  {bg:'#dbe4ff',tx:'#3b5bdb'},{bg:'#d3f9d8',tx:'#2b8a3e'},{bg:'#ffe8cc',tx:'#d9480f'},
+  {bg:'#f3d9fa',tx:'#862e9c'},{bg:'#fff3bf',tx:'#c07a00'},{bg:'#ffd6e0',tx:'#c2255c'},
+  {bg:'#c3fae8',tx:'#087f5b'},{bg:'#d0ebff',tx:'#1864ab'},{bg:'#f8f0fc',tx:'#6741d9'},
+  {bg:'#ffe3e3',tx:'#c92a2a'},{bg:'#e3fafc',tx:'#0c8599'},{bg:'#ebfbee',tx:'#2f9e44'},
+  {bg:'#fff4e6',tx:'#d9480f'},{bg:'#f4fce3',tx:'#4c7a34'},{bg:'#fce8f3',tx:'#a61e4d'},
+  {bg:'#e8f4fd',tx:'#1565c0'},
+];
+let _colorMap = {}, _colorIdx = 0;
+function docColor(name) {
+  if (!name) return {bg:'#f1f3f5', tx:'#868e96'};
+  if (!_colorMap[name]) _colorMap[name] = PALETTE[_colorIdx++ % PALETTE.length];
+  return _colorMap[name];
+}
+function warmColors(data) {
+  const names = new Set();
+  Object.values(data).forEach(m => Object.values(m).forEach(d => [d[T_DIA],d[T_NOITE]].forEach(n => { if(n && n.trim()) names.add(n.trim()); })));
+  const sorted = [...names].sort();
+  // Pre-assign all colors in alphabetical order first
+  sorted.forEach(n => docColor(n));
+  // Then swap Bruna <-> Heitor
+  if (_colorMap['Bruna'] && _colorMap['Heitor']) {
+    const tmp = _colorMap['Bruna'];
+    _colorMap['Bruna'] = _colorMap['Heitor'];
+    _colorMap['Heitor'] = tmp;
+  }
+}
+function allDoctors() {
+  const data = load(), s = new Set();
+  Object.values(data).forEach(m => Object.values(m).forEach(d => [d[T_DIA],d[T_NOITE]].forEach(n => { if(n && n.trim()) s.add(n.trim()); })));
+  return [...s].sort();
+}
+
+// ── DATA ──
+const SEED = {"ESCALA UTI - HI - JANEIRO 2025": {"2025-01-01": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Marcia"}, "2025-01-02": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-01-03": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-01-04": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-01-05": {"7 às 19 h": "Clara", "19 às 7 h": "Roland"}, "2025-01-06": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-01-07": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-01-08": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-01-09": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-01-10": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-01-11": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-01-12": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-01-13": {"7 às 19 h": "Julio", "19 às 7 h": "Clara"}, "2025-01-14": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-01-15": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-01-16": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-01-17": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-01-18": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-01-19": {"7 às 19 h": "Clara", "19 às 7 h": "Roland"}, "2025-01-20": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-01-21": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-01-22": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-01-23": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-01-24": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-01-25": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-01-26": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-01-27": {"7 às 19 h": "Julio", "19 às 7 h": "Clara"}, "2025-01-28": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-01-29": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-01-30": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-01-31": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}}, "ESCALA UTI - HI - FEVEREIRO 2025": {"2025-02-03": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-02-04": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-02-05": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-02-06": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-02-07": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-02-08": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-02-09": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-02-10": {"7 às 19 h": "Julio", "19 às 7 h": "Avner"}, "2025-02-11": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-02-12": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-02-13": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-02-14": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-02-15": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-02-16": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-02-17": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-02-18": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-02-19": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-02-20": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-02-21": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-02-22": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Julio"}, "2025-02-23": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-02-24": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-02-25": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-02-26": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-02-27": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-02-28": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}}, "ESCALA UTI - HI - MARÇO 2025": {"2025-03-03": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-03-04": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-03-05": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-03-06": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-03-07": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-03-08": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-03-09": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-03-10": {"7 às 19 h": "Julio", "19 às 7 h": "Avner"}, "2025-03-11": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-03-12": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-03-13": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-03-14": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-03-15": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-03-16": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-03-17": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-03-18": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-03-19": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-03-20": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-03-21": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-03-22": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-03-23": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-03-24": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-03-25": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-03-26": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-03-27": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-03-28": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-03-29": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-03-30": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-03-31": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}}, "ESCALA UTI - HI - ABRIL 2025": {"2025-04-01": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-04-02": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-04-03": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Heitor"}, "2025-04-04": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-04-05": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-04-06": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-04-07": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-04-08": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-04-09": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-04-10": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-04-11": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-04-12": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-04-13": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-04-14": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-04-15": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-04-16": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-04-17": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-04-18": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-04-19": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-04-20": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-04-21": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-04-22": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-04-23": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-04-24": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-04-25": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-04-26": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-04-27": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-04-28": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-04-29": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-04-30": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}}, "ESCALA UTI - HI - MAIO 2025": {"2025-05-01": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-05-02": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-05-03": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-05-04": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-05-05": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-05-06": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-05-07": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-05-08": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-05-09": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-05-10": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-05-11": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-05-12": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-05-13": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-05-14": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-05-15": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-05-16": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-05-17": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-05-18": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-05-19": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-05-20": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-05-21": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-05-22": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-05-23": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-05-24": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-05-25": {"7 às 19 h": "Heitor", "19 às 7 h": "Avner"}, "2025-05-26": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-05-27": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-05-28": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-05-29": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-05-30": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-05-31": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}}, "ESCALA UTI - HI - JUNHO 2025": {"2025-06-01": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-06-02": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-06-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-06-04": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-06-05": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-06-06": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-06-07": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-06-08": {"7 às 19 h": "Mauricio", "19 às 7 h": "Avner"}, "2025-06-09": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-06-10": {"7 às 19 h": "Icaro", "19 às 7 h": "Icaro"}, "2025-06-11": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-06-12": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-06-13": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-06-14": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-06-15": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-06-16": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-06-17": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-06-18": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-06-19": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-06-20": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-06-21": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-06-22": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-06-23": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-06-24": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-06-25": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-06-26": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-06-27": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-06-28": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-06-29": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-06-30": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}}, "ESCALA UTI - HI - JULHO 2025": {"2025-07-01": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-07-02": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-07-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Avner"}, "2025-07-04": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-07-05": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-07-06": {"7 às 19 h": "Mauricio", "19 às 7 h": "Avner"}, "2025-07-07": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-07-08": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-07-09": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-07-10": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-07-11": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-07-12": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-07-13": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-07-14": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-07-15": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-07-16": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-07-17": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-07-18": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-07-19": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-07-20": {"7 às 19 h": "Heitor", "19 às 7 h": "Avner"}, "2025-07-21": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-07-22": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-07-23": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-07-24": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-07-25": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-07-26": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-07-27": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-07-28": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-07-29": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-07-30": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-07-31": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}}, "ESCALA UTI - HI - AGOSTO 2025": {"2025-08-01": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Roland"}, "2025-08-02": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-08-03": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-08-04": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-08-05": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-08-06": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-08-07": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-08-08": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Roland"}, "2025-08-09": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-08-10": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-08-11": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-08-12": {"7 às 19 h": "Nilson", "19 às 7 h": "Marcus"}, "2025-08-13": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-08-14": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-08-15": {"7 às 19 h": "Julio", "19 às 7 h": "Roland"}, "2025-08-16": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-08-17": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-08-18": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-08-19": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-08-20": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-08-21": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-08-22": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Roland"}, "2025-08-23": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-08-24": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-08-25": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-08-26": {"7 às 19 h": "Nilson", "19 às 7 h": "Marcus"}, "2025-08-27": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-08-28": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-08-29": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Roland"}, "2025-08-30": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-08-31": {"7 às 19 h": "Mauricio", "19 às 7 h": "Avner"}}, "ESCALA UTI - HI - SETEMBRO 2025": {"2025-09-01": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-09-02": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-09-03": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-09-04": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-09-05": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-09-06": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-09-07": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-09-08": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-09-09": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-09-10": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-09-11": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-09-12": {"7 às 19 h": "Icaro", "19 às 7 h": "Heitor"}, "2025-09-13": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-09-14": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-09-15": {"7 às 19 h": "Heitor", "19 às 7 h": "Julio"}, "2025-09-16": {"7 às 19 h": "Julio", "19 às 7 h": "Roland"}, "2025-09-17": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-09-18": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-09-19": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-09-20": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-09-21": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-09-22": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-09-23": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-09-24": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-09-25": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-09-26": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-09-27": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-09-28": {"7 às 19 h": "Icaro", "19 às 7 h": "Avner"}, "2025-09-29": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-09-30": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}}, "ESCALA UTI - HI - OUTUBBRO 2025": {"2025-10-01": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-10-02": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-10-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-10-04": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-10-05": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-10-06": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-10-07": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-10-08": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-10-09": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-10-10": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-10-11": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-10-12": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-10-13": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-10-14": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-10-15": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-10-16": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-10-17": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-10-18": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-10-19": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-10-20": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-10-21": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-10-22": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-10-23": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-10-24": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-10-25": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-10-26": {"7 às 19 h": "Icaro", "19 às 7 h": "Avner"}, "2025-10-27": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-10-28": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-10-29": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-10-30": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-10-31": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}}, "ESCALA UTI - HI - NOVEMBRO 2025": {"2025-11-01": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-11-02": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-11-03": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-11-04": {"7 às 19 h": "Roberta", "19 às 7 h": "Marcus"}, "2025-11-05": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-11-06": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-11-07": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Roland"}, "2025-11-08": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-11-09": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-11-10": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-11-11": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-11-12": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-11-13": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-11-14": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-11-15": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-11-16": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-11-17": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-11-18": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-11-19": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-11-20": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-11-21": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-11-22": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-11-23": {"7 às 19 h": "Icaro", "19 às 7 h": "Avner"}, "2025-11-24": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-11-25": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-11-26": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-11-27": {"7 às 19 h": "Roberta", "19 às 7 h": "Avner"}, "2025-11-28": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-11-29": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2025-11-30": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}}, "ESCALA UTI - HI - DEZEMBRO 2025": {"2025-12-01": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-12-02": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-12-03": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-12-04": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2025-12-05": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-12-06": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-12-07": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-12-08": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-12-09": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-12-10": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-12-11": {"7 às 19 h": "Roberta", "19 às 7 h": "Avner"}, "2025-12-12": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-12-13": {"7 às 19 h": "Marcia", "19 às 7 h": "Marcia"}, "2025-12-14": {"7 às 19 h": "Roberta", "19 às 7 h": "Marcus"}, "2025-12-15": {"7 às 19 h": "Icaro", "19 às 7 h": "Icaro"}, "2025-12-16": {"7 às 19 h": "Roberta", "19 às 7 h": "Marcus"}, "2025-12-17": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-12-18": {"7 às 19 h": "Bruna", "19 às 7 h": "Mauricio"}, "2025-12-19": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-12-20": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-12-21": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2025-12-22": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-12-23": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-12-24": {"7 às 19 h": "Marcus", "19 às 7 h": "Heitor"}, "2025-12-25": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-12-26": {"7 às 19 h": "Heitor", "19 às 7 h": "Mauricio"}, "2025-12-27": {"7 às 19 h": "Icaro", "19 às 7 h": "Icaro"}, "2025-12-28": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-12-29": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-12-30": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-12-31": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}}, "ESCALA UTI - HI - JANEIRO 2026": {"2026-01-01": {"7 às 19 h": "Marcia", "19 às 7 h": "Julio"}, "2026-01-02": {"7 às 19 h": "Roberta", "19 às 7 h": "Heitor"}, "2026-01-03": {"7 às 19 h": "Marcia", "19 às 7 h": "Marcia"}, "2026-01-04": {"7 às 19 h": "Icaro", "19 às 7 h": "Icaro"}, "2026-01-05": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-01-06": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-07": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-01-08": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-01-09": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-10": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-01-11": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-01-12": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-01-13": {"7 às 19 h": "Heitor", "19 às 7 h": "Marcus"}, "2026-01-14": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-01-15": {"7 às 19 h": "Icaro", "19 às 7 h": "Bruna"}, "2026-01-16": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-17": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-01-18": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-01-19": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-01-20": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-21": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-01-22": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-01-23": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-24": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-01-25": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-01-26": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-01-27": {"7 às 19 h": "Roberta", "19 às 7 h": "Marcus"}, "2026-01-28": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-01-29": {"7 às 19 h": "Heitor", "19 às 7 h": "Bruna"}, "2026-01-30": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-31": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}}, "ESCALA UTI - HI - FEVEREIRO 2026": {"2026-02-01": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-02-02": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-02-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-02-04": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-02-05": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-02-06": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-02-07": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-02-08": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-02-09": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-02-10": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2026-02-11": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-02-12": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-02-13": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-02-14": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-02-15": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-02-16": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-02-17": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-02-18": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-02-19": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-02-20": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-02-21": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-02-22": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-02-23": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-02-24": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2026-02-25": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-02-26": {"7 às 19 h": "Heitor", "19 às 7 h": "Bruna"}, "2026-02-27": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2026-02-28": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-03-01": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}}, "ESCALA UTI - HI - MARÇO 2026": {"2026-03-01": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-03-02": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-03-04": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-03-05": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-03-06": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-03-07": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-08": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-03-09": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-10": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2026-03-11": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-03-12": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-03-13": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2026-03-14": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-03-15": {"7 às 19 h": "Roland", "19 às 7 h": "Heitor"}, "2026-03-16": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-17": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2026-03-18": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-03-19": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-03-20": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-03-21": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-03-22": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-03-23": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-24": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2026-03-25": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-03-26": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-03-27": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-03-28": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-03-29": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-03-30": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-31": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}}, "ESCALA UTI - HI - ABRIL 2026": {"2026-04-01": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-04-02": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-04-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-04-04": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-04-05": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-04-06": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-04-07": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2026-04-08": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-04-09": {"7 às 19 h": "Heitor", "19 às 7 h": "Bruna"}, "2026-04-10": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2026-04-11": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-04-12": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-04-13": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-04-14": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2026-04-15": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-04-16": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-04-17": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-04-18": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-04-19": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-04-20": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-04-21": {"7 às 19 h": "Heitor", "19 às 7 h": "Marcus"}, "2026-04-22": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-04-23": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-04-24": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-04-25": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-04-26": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-04-27": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-04-28": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-04-29": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-04-30": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}}, "ESCALA UTI - HI - MAIO 2026": {"2026-05-01": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-02": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-05-03": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-05-04": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-05-05": {"7 às 19 h": "Heitor", "19 às 7 h": "Marcus"}, "2026-05-06": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-05-07": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-05-08": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2026-05-09": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-05-10": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-05-11": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-05-12": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-13": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-05-14": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-05-15": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-16": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-05-17": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-05-18": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-05-19": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2026-05-20": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-05-21": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-05-22": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-23": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-05-24": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-05-25": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-05-26": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-27": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-05-28": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-05-29": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-30": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-05-31": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}}};
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY) || 'null') || SEED; } catch { return SEED; }
+}
+function persist(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
+if (!localStorage.getItem(KEY)) persist(SEED);
+
+function monthKey() {
+  return `ESCALA UTI - HI - ${MONTHS[vm].toUpperCase()} ${vy}`;
+}
+function monthData() { return load()[monthKey()] || {}; }
+function ds(d) { return `${vy}-${String(vm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+// ── STATE ──
+const now = new Date();
+let vy = now.getFullYear(), vm = now.getMonth();
+let currentView = 'cal';
+let editDate = null;
+
+// ── NAV ──
+function changeMonth(dir) {
+  vm += dir;
+  if (vm < 0) { vm = 11; vy--; }
+  if (vm > 11) { vm = 0; vy++; }
+  render();
+}
+function goToday() { vy = now.getFullYear(); vm = now.getMonth(); render(); }
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-cal').style.display  = v==='cal'  ? '' : 'none';
+  document.getElementById('view-list').style.display = v==='list' ? '' : 'none';
+  document.getElementById('btn-cal').classList.toggle('active',  v==='cal');
+  document.getElementById('btn-list').classList.toggle('active', v==='list');
+  render();
+}
+function ensureMonth() {
+  const data = load(), k = monthKey();
+  if (!data[k]) { data[k] = {}; persist(data); }
+  toast(`Mês "${MONTHS[vm]} ${vy}" pronto`);
+  render();
+}
+
+// ── RENDER ──
+function render() {
+  document.getElementById('month-label').textContent = `${MONTHS[vm]} ${vy}`;
+  if (currentView === 'cal') renderCal();
+  else renderList();
+  renderCounters();
+}
+
+function renderCounters() {
+  const md = monthData();
+  const counts = {};
+  Object.values(md).forEach(day => {
+    [day[T_DIA], day[T_NOITE]].forEach(n => { if(n && n.trim()) counts[n.trim()] = (counts[n.trim()]||0)+1; });
+  });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const bar = document.getElementById('counter-bar');
+  if (!sorted.length) {
+    bar.innerHTML = '<span class="counter-label">Sem dados —</span> <span style="font-size:12px;color:var(--gray-400)">clique em qualquer dia para adicionar</span>';
+    return;
+  }
+  bar.innerHTML = '<span class="counter-label">Turnos este mês:</span>' +
+    sorted.map(([name, n]) => {
+      const c = docColor(name);
+      return `<span class="counter-chip" style="background:${c.bg};color:${c.tx}">
+        ${name} <span class="counter-n">${n}</span>
+      </span>`;
+    }).join('');
+}
+
+// ── CALENDAR ──
+function renderCal() {
+  const md = monthData();
+  const daysInMonth = new Date(vy, vm+1, 0).getDate();
+  const firstDay    = (new Date(vy, vm, 1).getDay() + 6) % 7; // Mon=0
+
+  document.getElementById('cal-header').innerHTML =
+    DAYS_SHORT.map(d => `<div class="cal-header-day">${d}</div>`).join('');
+
+  let cells = '';
+  // Prev month padding
+  const prevDays = new Date(vy, vm, 0).getDate();
+  for (let i = firstDay-1; i >= 0; i--)
+    cells += `<div class="cal-cell other-month"><div class="cal-day-num">${prevDays-i}</div></div>`;
+
+  // This month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date   = ds(d);
+    const dow    = new Date(vy, vm, d).getDay();
+    const isToday   = date === TODAY;
+    const isWeekend = dow===0||dow===6;
+    const dia   = md[date]?.[T_DIA]   || '';
+    const noite = md[date]?.[T_NOITE] || '';
+    const cDia   = docColor(dia);
+    const cNoite = docColor(noite);
+
+    const diaSlot = dia
+      ? `<div class="cell-slot" style="background:${cDia.bg}"><span class="slot-icon" style="color:#b45309;font-weight:700">D</span><span class="slot-name" style="color:${cDia.tx}">${dia}</span></div>`
+      : `<div class="cell-slot" style="background:#f9fafb"><span class="slot-empty">— dia</span></div>`;
+    const noiteSlot = noite
+      ? `<div class="cell-slot" style="background:${cNoite.bg}"><span class="slot-icon" style="color:#3b5bdb;font-weight:700">N</span><span class="slot-name" style="color:${cNoite.tx}">${noite}</span></div>`
+      : `<div class="cell-slot" style="background:#f5f7ff"><span class="slot-empty">— noite</span></div>`;
+
+    cells += `<div class="cal-cell${isToday?' today':''}${isWeekend?' weekend':''}" onclick="openModal('${date}')">
+      <div class="cal-day-num">${d}</div>
+      <div class="cell-slots">${diaSlot}${noiteSlot}</div>
+    </div>`;
+  }
+
+  // Next month padding
+  const total = Math.ceil((firstDay+daysInMonth)/7)*7;
+  for (let d = 1; d <= total-firstDay-daysInMonth; d++)
+    cells += `<div class="cal-cell other-month"><div class="cal-day-num">${d}</div></div>`;
+
+  document.getElementById('cal-body').innerHTML = cells;
+}
+
+
+
+// ── LIST ──
+function renderList() {
+  const md = monthData();
+  const daysInMonth = new Date(vy, vm+1, 0).getDate();
+  const firstDow    = (new Date(vy, vm, 1).getDay() + 6) % 7; // Mon=0
+  let html = '', weekHtml = '', weekNum = 0;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = ds(d);
+    const dow  = new Date(vy, vm, d).getDay();
+    const isToday = date === TODAY;
+    const newWeek = Math.floor((d + firstDow - 1) / 7);
+
+    if (newWeek > weekNum) {
+      weekNum = newWeek;
+      if (weekHtml) html += weekHtml + '</div>';
+      html += `<div class="list-week"><div class="week-label">Semana ${weekNum}</div>`;
+      weekHtml = '';
+    }
+
+    const dia   = md[date]?.[T_DIA]   || '';
+    const noite = md[date]?.[T_NOITE] || '';
+    const cDia   = docColor(dia);
+    const cNoite = docColor(noite);
+
+    const diaSlotBg   = dia   ? cDia.bg   : 'var(--white)';
+    const noiteSlotBg = noite ? cNoite.bg : 'var(--white)';
+    weekHtml += `<div class="list-row${isToday?' today-row':''}" onclick="openModal('${date}')">
+      <div class="list-date">
+        <div class="list-date-num">${d}</div>
+        <div class="list-date-day">${DAYS_SHORT[dow]}</div>
+      </div>
+      <div class="list-slot" style="background:${diaSlotBg}">
+        <div class="slot-label dia">☀ 7h–19h</div>
+        ${dia
+          ? `<span class="slot-doc" style="color:${cDia.tx}">${dia}</span>`
+          : `<div class="slot-empty">—</div>`}
+      </div>
+      <div class="list-slot" style="background:${noiteSlotBg}">
+        <div class="slot-label noite">🌙 19h–7h</div>
+        ${noite
+          ? `<span class="slot-doc" style="color:${cNoite.tx}">${noite}</span>`
+          : `<div class="slot-empty">—</div>`}
+      </div>
+    </div>`;
+  }
+  if (weekHtml) html += weekHtml + '</div>';
+  document.getElementById('list-body').innerHTML = html || '<div style="padding:32px;text-align:center;color:var(--gray-400)">Sem dados neste mês</div>';
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') closeModal();
+  if (e.key==='Enter' && document.getElementById('overlay').classList.contains('open') && e.target.tagName==='INPUT') saveEntry();
+});
+
+warmColors(load());
+render();
+document.getElementById('last-updated').textContent = 'Dados de ' + new Date().toLocaleDateString('pt-BR');
+</script>
+</body>
+</html>

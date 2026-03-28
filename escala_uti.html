@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escala UTI — Hospital de Ilhéus</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --white: #ffffff;
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f5;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+  --blue-50:  #e7f5ff;
+  --blue-400: #74c0fc;
+  --blue-500: #339af0;
+  --blue-600: #228be6;
+  --blue-700: #1c7ed6;
+  --teal-50:  #e6fcf5;
+  --teal-600: #0ca678;
+  --teal-700: #099268;
+  --font: 'Inter', system-ui, sans-serif;
+  --radius: 8px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+
+body {
+  font-family: var(--font);
+  background: var(--gray-50);
+  color: var(--gray-900);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── HEADER (idêntico à Agenda) ── */
+.header {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px; position: sticky; top: 0; z-index: 50;
+  box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-badge {
+  background: var(--blue-600); color: white;
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+}
+.header-title { font-size: 16px; font-weight: 600; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+/* ── CONTROLS (idêntico à Agenda) ── */
+.controls {
+  background: var(--white); border-bottom: 1px solid var(--gray-200);
+  padding: 14px 28px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.month-nav { display: flex; align-items: center; gap: 8px; }
+.month-label { font-size: 15px; font-weight: 600; min-width: 180px; text-align: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font); font-size: 13px; font-weight: 500;
+  padding: 7px 14px; border-radius: var(--radius);
+  border: 1px solid var(--gray-300); background: var(--white);
+  color: var(--gray-700); cursor: pointer; transition: all .15s;
+}
+.btn:hover { background: var(--gray-100); }
+.btn-primary { background: var(--blue-600); border-color: var(--blue-600); color: white; }
+.btn-primary:hover { background: var(--blue-700); border-color: var(--blue-700); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.sep { width: 1px; height: 24px; background: var(--gray-200); }
+
+/* ── VIEW TOGGLE (idêntico à Agenda) ── */
+.view-toggle { display: flex; gap: 4px; }
+.view-btn {
+  padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
+  border: 1px solid var(--gray-300); background: var(--white); cursor: pointer;
+  font-family: var(--font); color: var(--gray-700); transition: all .15s;
+}
+.view-btn.active { background: var(--gray-900); border-color: var(--gray-900); color: white; }
+
+/* ── COUNTER BAR (substitui legend-bar da Agenda) ── */
+.counter-bar {
+  padding: 10px 28px; background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  min-height: 42px;
+}
+.counter-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--gray-500);
+}
+.counter-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; padding: 3px 11px; border-radius: 20px;
+}
+.counter-n {
+  background: rgba(0,0,0,.12); border-radius: 20px;
+  padding: 0 5px; font-size: 10px; font-weight: 700;
+}
+
+/* ── CALENDAR VIEW ── */
+.cal-wrap { padding: 20px 28px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-header-day {
+  text-align: center; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--gray-500); padding: 6px 0;
+}
+.cal-cell {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius); min-height: 90px;
+  cursor: pointer; transition: border-color .12s, box-shadow .12s;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.cal-cell:hover { border-color: var(--blue-400); box-shadow: 0 0 0 2px var(--blue-50); }
+.cal-cell.other-month { opacity: .35; pointer-events: none; }
+.cal-cell.today { border: 2px solid var(--blue-500); }
+.cal-cell.today .cal-day-num { color: var(--blue-600); }
+.cal-day-num { font-size: 11px; font-weight: 700; color: var(--gray-600); padding: 5px 7px 3px; flex-shrink: 0; }
+.cell-slots { display: flex; flex-direction: column; flex: 1; }
+.cell-slot {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 2px 4px; gap: 4px; min-height: 0;
+  border-top: 1px solid rgba(0,0,0,.06);
+  transition: filter .12s;
+  text-align: center;
+}
+.cell-slot:first-child { border-top: none; }
+.cal-cell:hover .cell-slot { filter: brightness(.97); }
+.slot-icon { font-size: 9px; flex-shrink: 0; opacity: 1; line-height: 1; }
+.slot-name { font-size: 10px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.slot-empty { font-size: 9px; opacity: .3; font-style: italic; }
+
+/* ── LIST VIEW ── */
+.list-wrap { padding: 16px 28px; }
+.list-week { margin-bottom: 20px; }
+.week-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--gray-500);
+  padding: 6px 0; margin-bottom: 6px;
+  border-bottom: 1px solid var(--gray-200);
+}
+.list-row {
+  display: grid; grid-template-columns: 90px 1fr 1fr;
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius); margin-bottom: 3px;
+  overflow: hidden; transition: box-shadow .12s;
+}
+.list-row:hover { box-shadow: var(--shadow-sm); }
+.list-row.today-row { border-color: var(--blue-400); background: var(--blue-50); }
+.list-date {
+  padding: 10px 12px; border-right: 1px solid var(--gray-100);
+  display: flex; flex-direction: column; justify-content: center;
+}
+.list-date-num { font-size: 18px; font-weight: 700; line-height: 1; color: var(--gray-900); }
+.list-date-day { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--gray-500); margin-top: 2px; }
+.today-row .list-date-num { color: var(--blue-600); }
+.list-slot {
+  padding: 8px 12px; border-right: 1px solid var(--gray-100);
+  cursor: pointer; transition: background .12s;
+}
+.list-slot:last-child { border-right: none; }
+.list-slot:hover { background: var(--gray-50); }
+.slot-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; margin-bottom: 4px;
+}
+.slot-label.dia   { color: var(--teal-600); }
+.slot-label.noite { color: var(--blue-600); }
+.slot-empty { font-size: 12px; color: var(--gray-400); font-style: italic; }
+.slot-doc {
+  font-size: 13px; font-weight: 600; color: var(--gray-800);
+  display: inline-block; padding: 2px 10px; border-radius: 20px; margin-top: 2px;
+}
+
+/* ── MODAL (idêntico à Agenda, adaptado) ── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.3); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--white); border-radius: 14px; padding: 28px;
+  width: 420px; max-width: 95vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,.12);
+}
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+.modal-sub   { font-size: 12px; color: var(--gray-600); margin-bottom: 22px; }
+.form-group  { margin-bottom: 16px; }
+.form-label  {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--gray-600); margin-bottom: 7px;
+  display: flex; align-items: center; gap: 6px;
+}
+.form-label-dot { width: 8px; height: 8px; border-radius: 50%; }
+.form-input {
+  width: 100%; border: 1px solid var(--gray-300); border-radius: var(--radius);
+  padding: 9px 12px; font-family: var(--font); font-size: 13px;
+  outline: none; transition: border-color .15s;
+}
+.form-input:focus { border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-50); }
+.quick-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.chip {
+  font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+  border: 1px solid transparent; cursor: pointer;
+  font-family: var(--font); transition: all .1s;
+}
+.chip:hover { opacity: .85; border-color: rgba(0,0,0,.15); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* ── TOAST (idêntico à Agenda) ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--gray-900); color: white;
+  padding: 11px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  z-index: 999; opacity: 0; transform: translateY(8px);
+  transition: all .2s; pointer-events: none; box-shadow: var(--shadow);
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+@media print {
+  .header-right, .btn, .overlay, .toast, .view-toggle { display: none !important; }
+  .cal-wrap, .list-wrap { padding: 0; }
+  body { background: white; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <span class="header-badge">UTI</span>
+    <span class="header-title">Escala — Hospital de Ilhéus</span>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-sm" onclick="window.print()">🖨 Imprimir</button>
+    <button class="btn btn-sm" onclick="exportCSV()">⬇ CSV</button>
+    <button class="btn btn-sm btn-primary" onclick="exportViewer()">📤 Compartilhar</button>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="month-nav">
+    <button class="btn btn-sm" onclick="changeMonth(-1)">‹ Anterior</button>
+    <div class="month-label" id="month-label"></div>
+    <button class="btn btn-sm" onclick="changeMonth(1)">Próximo ›</button>
+  </div>
+  <div class="sep"></div>
+  <button class="btn btn-sm" onclick="goToday()">Hoje</button>
+  <div class="sep"></div>
+  <button class="btn btn-sm btn-primary" onclick="ensureMonth()">+ Novo mês</button>
+  <div class="sep"></div>
+  <div class="view-toggle">
+    <button class="view-btn active" id="btn-cal" onclick="setView('cal')">📅 Calendário</button>
+    <button class="view-btn" id="btn-list" onclick="setView('list')">☰ Lista</button>
+  </div>
+</div>
+
+<div class="counter-bar" id="counter-bar">
+  <span class="counter-label">Turnos este mês:</span>
+</div>
+
+<div id="view-cal">
+  <div class="cal-wrap">
+    <div class="cal-grid" id="cal-header"></div>
+    <div class="cal-grid" id="cal-body" style="margin-top:4px"></div>
+  </div>
+</div>
+
+<div id="view-list" style="display:none">
+  <div class="list-wrap" id="list-body"></div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Editar turno</div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div class="form-group">
+      <div class="form-label">
+        <div class="form-label-dot" style="background:var(--teal-600)"></div>
+        ☀ 7h–19h (Dia)
+      </div>
+      <input class="form-input" id="inp-dia" placeholder="Nome do médico plantonista...">
+      <div class="quick-chips" id="chips-dia"></div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">
+        <div class="form-label-dot" style="background:var(--blue-600)"></div>
+        🌙 19h–7h (Noite)
+      </div>
+      <input class="form-input" id="inp-noite" placeholder="Nome do médico plantonista...">
+      <div class="quick-chips" id="chips-noite"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="clearEntry()">🗑 Limpar</button>
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEntry()">Salvar ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ──
+const KEY = 'uti_v4';
+const T_DIA   = '7 às 19 h';
+const T_NOITE = '19 às 7 h';
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DAYS_SHORT = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+const DAYS_FULL  = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const TODAY = new Date().toISOString().slice(0,10);
+
+// ── DOCTOR COLORS — 16 distinct light-bg pills ──
+const PALETTE = [
+  {bg:'#dbe4ff',tx:'#3b5bdb'},{bg:'#d3f9d8',tx:'#2b8a3e'},{bg:'#ffe8cc',tx:'#d9480f'},
+  {bg:'#f3d9fa',tx:'#862e9c'},{bg:'#fff3bf',tx:'#c07a00'},{bg:'#ffd6e0',tx:'#c2255c'},
+  {bg:'#c3fae8',tx:'#087f5b'},{bg:'#d0ebff',tx:'#1864ab'},{bg:'#f8f0fc',tx:'#6741d9'},
+  {bg:'#ffe3e3',tx:'#c92a2a'},{bg:'#e3fafc',tx:'#0c8599'},{bg:'#ebfbee',tx:'#2f9e44'},
+  {bg:'#fff4e6',tx:'#d9480f'},{bg:'#f4fce3',tx:'#4c7a34'},{bg:'#fce8f3',tx:'#a61e4d'},
+  {bg:'#e8f4fd',tx:'#1565c0'},
+];
+let _colorMap = {}, _colorIdx = 0;
+function docColor(name) {
+  if (!name) return {bg:'#f1f3f5', tx:'#868e96'};
+  if (!_colorMap[name]) _colorMap[name] = PALETTE[_colorIdx++ % PALETTE.length];
+  return _colorMap[name];
+}
+function warmColors(data) {
+  const names = new Set();
+  Object.values(data).forEach(m => Object.values(m).forEach(d => [d[T_DIA],d[T_NOITE]].forEach(n => { if(n && n.trim()) names.add(n.trim()); })));
+  const sorted = [...names].sort();
+  // Pre-assign all colors in alphabetical order first
+  sorted.forEach(n => docColor(n));
+  // Then swap Bruna <-> Heitor
+  if (_colorMap['Bruna'] && _colorMap['Heitor']) {
+    const tmp = _colorMap['Bruna'];
+    _colorMap['Bruna'] = _colorMap['Heitor'];
+    _colorMap['Heitor'] = tmp;
+  }
+}
+function allDoctors() {
+  const data = load(), s = new Set();
+  Object.values(data).forEach(m => Object.values(m).forEach(d => [d[T_DIA],d[T_NOITE]].forEach(n => { if(n && n.trim()) s.add(n.trim()); })));
+  return [...s].sort();
+}
+
+// ── DATA ──
+const SEED = {"ESCALA UTI - HI - JANEIRO 2025": {"2025-01-01": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Marcia"}, "2025-01-02": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-01-03": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-01-04": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-01-05": {"7 às 19 h": "Clara", "19 às 7 h": "Roland"}, "2025-01-06": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-01-07": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-01-08": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-01-09": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-01-10": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-01-11": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-01-12": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-01-13": {"7 às 19 h": "Julio", "19 às 7 h": "Clara"}, "2025-01-14": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-01-15": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-01-16": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-01-17": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-01-18": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-01-19": {"7 às 19 h": "Clara", "19 às 7 h": "Roland"}, "2025-01-20": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-01-21": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-01-22": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-01-23": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-01-24": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-01-25": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-01-26": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-01-27": {"7 às 19 h": "Julio", "19 às 7 h": "Clara"}, "2025-01-28": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-01-29": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-01-30": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-01-31": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}}, "ESCALA UTI - HI - FEVEREIRO 2025": {"2025-02-03": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-02-04": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-02-05": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-02-06": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-02-07": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-02-08": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-02-09": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-02-10": {"7 às 19 h": "Julio", "19 às 7 h": "Avner"}, "2025-02-11": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-02-12": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-02-13": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-02-14": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-02-15": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-02-16": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-02-17": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-02-18": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-02-19": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-02-20": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-02-21": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-02-22": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Julio"}, "2025-02-23": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-02-24": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-02-25": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-02-26": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-02-27": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-02-28": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}}, "ESCALA UTI - HI - MARÇO 2025": {"2025-03-03": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-03-04": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-03-05": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-03-06": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-03-07": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-03-08": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-03-09": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-03-10": {"7 às 19 h": "Julio", "19 às 7 h": "Avner"}, "2025-03-11": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-03-12": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-03-13": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-03-14": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-03-15": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-03-16": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-03-17": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-03-18": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-03-19": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-03-20": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-03-21": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-03-22": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-03-23": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-03-24": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-03-25": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-03-26": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-03-27": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Leandro"}, "2025-03-28": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-03-29": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-03-30": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-03-31": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}}, "ESCALA UTI - HI - ABRIL 2025": {"2025-04-01": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-04-02": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-04-03": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Heitor"}, "2025-04-04": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-04-05": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-04-06": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-04-07": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-04-08": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-04-09": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-04-10": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-04-11": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-04-12": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-04-13": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-04-14": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-04-15": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-04-16": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-04-17": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-04-18": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-04-19": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-04-20": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-04-21": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-04-22": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-04-23": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-04-24": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-04-25": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-04-26": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-04-27": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-04-28": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-04-29": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-04-30": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}}, "ESCALA UTI - HI - MAIO 2025": {"2025-05-01": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-05-02": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-05-03": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-05-04": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-05-05": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-05-06": {"7 às 19 h": "Roland", "19 às 7 h": "Marcus"}, "2025-05-07": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-05-08": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-05-09": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-05-10": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-05-11": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-05-12": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-05-13": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-05-14": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-05-15": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-05-16": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-05-17": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-05-18": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-05-19": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-05-20": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-05-21": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-05-22": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-05-23": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-05-24": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-05-25": {"7 às 19 h": "Heitor", "19 às 7 h": "Avner"}, "2025-05-26": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-05-27": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-05-28": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-05-29": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-05-30": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-05-31": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}}, "ESCALA UTI - HI - JUNHO 2025": {"2025-06-01": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-06-02": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-06-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-06-04": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-06-05": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-06-06": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-06-07": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-06-08": {"7 às 19 h": "Mauricio", "19 às 7 h": "Avner"}, "2025-06-09": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-06-10": {"7 às 19 h": "Icaro", "19 às 7 h": "Icaro"}, "2025-06-11": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-06-12": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-06-13": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-06-14": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-06-15": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-06-16": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-06-17": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-06-18": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-06-19": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-06-20": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-06-21": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-06-22": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-06-23": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-06-24": {"7 às 19 h": "Roland", "19 às 7 h": "Roland"}, "2025-06-25": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-06-26": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-06-27": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-06-28": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-06-29": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-06-30": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}}, "ESCALA UTI - HI - JULHO 2025": {"2025-07-01": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-07-02": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-07-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Avner"}, "2025-07-04": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-07-05": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-07-06": {"7 às 19 h": "Mauricio", "19 às 7 h": "Avner"}, "2025-07-07": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-07-08": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-07-09": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-07-10": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-07-11": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-07-12": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-07-13": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-07-14": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-07-15": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-07-16": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-07-17": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-07-18": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-07-19": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-07-20": {"7 às 19 h": "Heitor", "19 às 7 h": "Avner"}, "2025-07-21": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-07-22": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-07-23": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-07-24": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-07-25": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-07-26": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-07-27": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-07-28": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-07-29": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-07-30": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-07-31": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}}, "ESCALA UTI - HI - AGOSTO 2025": {"2025-08-01": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Roland"}, "2025-08-02": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-08-03": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-08-04": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-08-05": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-08-06": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-08-07": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-08-08": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Roland"}, "2025-08-09": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-08-10": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-08-11": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-08-12": {"7 às 19 h": "Nilson", "19 às 7 h": "Marcus"}, "2025-08-13": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-08-14": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-08-15": {"7 às 19 h": "Julio", "19 às 7 h": "Roland"}, "2025-08-16": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-08-17": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-08-18": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-08-19": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-08-20": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-08-21": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-08-22": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Roland"}, "2025-08-23": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-08-24": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-08-25": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-08-26": {"7 às 19 h": "Nilson", "19 às 7 h": "Marcus"}, "2025-08-27": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-08-28": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-08-29": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Roland"}, "2025-08-30": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-08-31": {"7 às 19 h": "Mauricio", "19 às 7 h": "Avner"}}, "ESCALA UTI - HI - SETEMBRO 2025": {"2025-09-01": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-09-02": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-09-03": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-09-04": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-09-05": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-09-06": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-09-07": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-09-08": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-09-09": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-09-10": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-09-11": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-09-12": {"7 às 19 h": "Icaro", "19 às 7 h": "Heitor"}, "2025-09-13": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-09-14": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-09-15": {"7 às 19 h": "Heitor", "19 às 7 h": "Julio"}, "2025-09-16": {"7 às 19 h": "Julio", "19 às 7 h": "Roland"}, "2025-09-17": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-09-18": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-09-19": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-09-20": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-09-21": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-09-22": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-09-23": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-09-24": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-09-25": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-09-26": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-09-27": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-09-28": {"7 às 19 h": "Icaro", "19 às 7 h": "Avner"}, "2025-09-29": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-09-30": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}}, "ESCALA UTI - HI - OUTUBBRO 2025": {"2025-10-01": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-10-02": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-10-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-10-04": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-10-05": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-10-06": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-10-07": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-10-08": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-10-09": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-10-10": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-10-11": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-10-12": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-10-13": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-10-14": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-10-15": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-10-16": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-10-17": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-10-18": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-10-19": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-10-20": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-10-21": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-10-22": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-10-23": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-10-24": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-10-25": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-10-26": {"7 às 19 h": "Icaro", "19 às 7 h": "Avner"}, "2025-10-27": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-10-28": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-10-29": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-10-30": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-10-31": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}}, "ESCALA UTI - HI - NOVEMBRO 2025": {"2025-11-01": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-11-02": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-11-03": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-11-04": {"7 às 19 h": "Roberta", "19 às 7 h": "Marcus"}, "2025-11-05": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-11-06": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-11-07": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Roland"}, "2025-11-08": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-11-09": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-11-10": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-11-11": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-11-12": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-11-13": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Avner"}, "2025-11-14": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-11-15": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Rodrigo"}, "2025-11-16": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2025-11-17": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-11-18": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-11-19": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-11-20": {"7 às 19 h": "Rodrigo", "19 às 7 h": "Mauricio"}, "2025-11-21": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-11-22": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-11-23": {"7 às 19 h": "Icaro", "19 às 7 h": "Avner"}, "2025-11-24": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-11-25": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-11-26": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-11-27": {"7 às 19 h": "Roberta", "19 às 7 h": "Avner"}, "2025-11-28": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-11-29": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2025-11-30": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}}, "ESCALA UTI - HI - DEZEMBRO 2025": {"2025-12-01": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-12-02": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-12-03": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-12-04": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2025-12-05": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-12-06": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-12-07": {"7 às 19 h": "Roland", "19 às 7 h": "Avner"}, "2025-12-08": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-12-09": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2025-12-10": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-12-11": {"7 às 19 h": "Roberta", "19 às 7 h": "Avner"}, "2025-12-12": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-12-13": {"7 às 19 h": "Marcia", "19 às 7 h": "Marcia"}, "2025-12-14": {"7 às 19 h": "Roberta", "19 às 7 h": "Marcus"}, "2025-12-15": {"7 às 19 h": "Icaro", "19 às 7 h": "Icaro"}, "2025-12-16": {"7 às 19 h": "Roberta", "19 às 7 h": "Marcus"}, "2025-12-17": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2025-12-18": {"7 às 19 h": "Bruna", "19 às 7 h": "Mauricio"}, "2025-12-19": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2025-12-20": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2025-12-21": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2025-12-22": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-12-23": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-12-24": {"7 às 19 h": "Marcus", "19 às 7 h": "Heitor"}, "2025-12-25": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2025-12-26": {"7 às 19 h": "Heitor", "19 às 7 h": "Mauricio"}, "2025-12-27": {"7 às 19 h": "Icaro", "19 às 7 h": "Icaro"}, "2025-12-28": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-12-29": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2025-12-30": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2025-12-31": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}}, "ESCALA UTI - HI - JANEIRO 2026": {"2026-01-01": {"7 às 19 h": "Marcia", "19 às 7 h": "Julio"}, "2026-01-02": {"7 às 19 h": "Roberta", "19 às 7 h": "Heitor"}, "2026-01-03": {"7 às 19 h": "Marcia", "19 às 7 h": "Marcia"}, "2026-01-04": {"7 às 19 h": "Icaro", "19 às 7 h": "Icaro"}, "2026-01-05": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-01-06": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-07": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-01-08": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-01-09": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-10": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-01-11": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-01-12": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-01-13": {"7 às 19 h": "Heitor", "19 às 7 h": "Marcus"}, "2026-01-14": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-01-15": {"7 às 19 h": "Icaro", "19 às 7 h": "Bruna"}, "2026-01-16": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-17": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-01-18": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-01-19": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-01-20": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-21": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-01-22": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-01-23": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-24": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-01-25": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-01-26": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-01-27": {"7 às 19 h": "Roberta", "19 às 7 h": "Marcus"}, "2026-01-28": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-01-29": {"7 às 19 h": "Heitor", "19 às 7 h": "Bruna"}, "2026-01-30": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-01-31": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}}, "ESCALA UTI - HI - FEVEREIRO 2026": {"2026-02-01": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-02-02": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-02-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-02-04": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-02-05": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-02-06": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-02-07": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-02-08": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-02-09": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-02-10": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2026-02-11": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-02-12": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-02-13": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-02-14": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-02-15": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-02-16": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-02-17": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-02-18": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-02-19": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-02-20": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-02-21": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-02-22": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-02-23": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-02-24": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2026-02-25": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-02-26": {"7 às 19 h": "Heitor", "19 às 7 h": "Bruna"}, "2026-02-27": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2026-02-28": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-03-01": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}}, "ESCALA UTI - HI - MARÇO 2026": {"2026-03-01": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-03-02": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-03-04": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-03-05": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-03-06": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-03-07": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-08": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-03-09": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-10": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2026-03-11": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-03-12": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-03-13": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2026-03-14": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-03-15": {"7 às 19 h": "Roland", "19 às 7 h": "Heitor"}, "2026-03-16": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-17": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2026-03-18": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-03-19": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-03-20": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-03-21": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-03-22": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-03-23": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-24": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2026-03-25": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-03-26": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-03-27": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-03-28": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-03-29": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-03-30": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-03-31": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}}, "ESCALA UTI - HI - ABRIL 2026": {"2026-04-01": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-04-02": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-04-03": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-04-04": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-04-05": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-04-06": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-04-07": {"7 às 19 h": "Icaro", "19 às 7 h": "Marcus"}, "2026-04-08": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-04-09": {"7 às 19 h": "Heitor", "19 às 7 h": "Bruna"}, "2026-04-10": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2026-04-11": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-04-12": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-04-13": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-04-14": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2026-04-15": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-04-16": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-04-17": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-04-18": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-04-19": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-04-20": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-04-21": {"7 às 19 h": "Heitor", "19 às 7 h": "Marcus"}, "2026-04-22": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-04-23": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-04-24": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-04-25": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-04-26": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-04-27": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-04-28": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-04-29": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-04-30": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}}, "ESCALA UTI - HI - MAIO 2026": {"2026-05-01": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-02": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-05-03": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-05-04": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-05-05": {"7 às 19 h": "Heitor", "19 às 7 h": "Marcus"}, "2026-05-06": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-05-07": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-05-08": {"7 às 19 h": "Heitor", "19 às 7 h": "Roland"}, "2026-05-09": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-05-10": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-05-11": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-05-12": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-13": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-05-14": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-05-15": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-16": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-05-17": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}, "2026-05-18": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-05-19": {"7 às 19 h": "Heitor", "19 às 7 h": "Heitor"}, "2026-05-20": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-05-21": {"7 às 19 h": "Roberta", "19 às 7 h": "Bruna"}, "2026-05-22": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-23": {"7 às 19 h": "Mauricio", "19 às 7 h": "Mauricio"}, "2026-05-24": {"7 às 19 h": "Roland", "19 às 7 h": "Icaro"}, "2026-05-25": {"7 às 19 h": "Julio", "19 às 7 h": "Julio"}, "2026-05-26": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-27": {"7 às 19 h": "Marcus", "19 às 7 h": "Marcia"}, "2026-05-28": {"7 às 19 h": "Roberta", "19 às 7 h": "Mauricio"}, "2026-05-29": {"7 às 19 h": "Icaro", "19 às 7 h": "Roland"}, "2026-05-30": {"7 às 19 h": "Roberta", "19 às 7 h": "Roberta"}, "2026-05-31": {"7 às 19 h": "Bruna", "19 às 7 h": "Marcus"}}};
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY) || 'null') || SEED; } catch { return SEED; }
+}
+function persist(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
+if (!localStorage.getItem(KEY)) persist(SEED);
+
+function monthKey() {
+  return `ESCALA UTI - HI - ${MONTHS[vm].toUpperCase()} ${vy}`;
+}
+function monthData() { return load()[monthKey()] || {}; }
+function ds(d) { return `${vy}-${String(vm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+// ── STATE ──
+const now = new Date();
+let vy = now.getFullYear(), vm = now.getMonth();
+let currentView = 'cal';
+let editDate = null;
+
+// ── NAV ──
+function changeMonth(dir) {
+  vm += dir;
+  if (vm < 0) { vm = 11; vy--; }
+  if (vm > 11) { vm = 0; vy++; }
+  render();
+}
+function goToday() { vy = now.getFullYear(); vm = now.getMonth(); render(); }
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-cal').style.display  = v==='cal'  ? '' : 'none';
+  document.getElementById('view-list').style.display = v==='list' ? '' : 'none';
+  document.getElementById('btn-cal').classList.toggle('active',  v==='cal');
+  document.getElementById('btn-list').classList.toggle('active', v==='list');
+  render();
+}
+function ensureMonth() {
+  const data = load(), k = monthKey();
+  if (!data[k]) { data[k] = {}; persist(data); }
+  toast(`Mês "${MONTHS[vm]} ${vy}" pronto`);
+  render();
+}
+
+// ── RENDER ──
+function render() {
+  document.getElementById('month-label').textContent = `${MONTHS[vm]} ${vy}`;
+  if (currentView === 'cal') renderCal();
+  else renderList();
+  renderCounters();
+}
+
+function renderCounters() {
+  const md = monthData();
+  const counts = {};
+  Object.values(md).forEach(day => {
+    [day[T_DIA], day[T_NOITE]].forEach(n => { if(n && n.trim()) counts[n.trim()] = (counts[n.trim()]||0)+1; });
+  });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const bar = document.getElementById('counter-bar');
+  if (!sorted.length) {
+    bar.innerHTML = '<span class="counter-label">Sem dados —</span> <span style="font-size:12px;color:var(--gray-400)">clique em qualquer dia para adicionar</span>';
+    return;
+  }
+  bar.innerHTML = '<span class="counter-label">Turnos este mês:</span>' +
+    sorted.map(([name, n]) => {
+      const c = docColor(name);
+      return `<span class="counter-chip" style="background:${c.bg};color:${c.tx}">
+        ${name} <span class="counter-n">${n}</span>
+      </span>`;
+    }).join('');
+}
+
+// ── CALENDAR ──
+function renderCal() {
+  const md = monthData();
+  const daysInMonth = new Date(vy, vm+1, 0).getDate();
+  const firstDay    = (new Date(vy, vm, 1).getDay() + 6) % 7; // Mon=0
+
+  document.getElementById('cal-header').innerHTML =
+    DAYS_SHORT.map(d => `<div class="cal-header-day">${d}</div>`).join('');
+
+  let cells = '';
+  // Prev month padding
+  const prevDays = new Date(vy, vm, 0).getDate();
+  for (let i = firstDay-1; i >= 0; i--)
+    cells += `<div class="cal-cell other-month"><div class="cal-day-num">${prevDays-i}</div></div>`;
+
+  // This month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date   = ds(d);
+    const dow    = new Date(vy, vm, d).getDay();
+    const isToday   = date === TODAY;
+    const isWeekend = dow===0||dow===6;
+    const dia   = md[date]?.[T_DIA]   || '';
+    const noite = md[date]?.[T_NOITE] || '';
+    const cDia   = docColor(dia);
+    const cNoite = docColor(noite);
+
+    const diaSlot = dia
+      ? `<div class="cell-slot" style="background:${cDia.bg}"><span class="slot-icon" style="color:#b45309;font-weight:700">D</span><span class="slot-name" style="color:${cDia.tx}">${dia}</span></div>`
+      : `<div class="cell-slot" style="background:#f9fafb"><span class="slot-empty">— dia</span></div>`;
+    const noiteSlot = noite
+      ? `<div class="cell-slot" style="background:${cNoite.bg}"><span class="slot-icon" style="color:#3b5bdb;font-weight:700">N</span><span class="slot-name" style="color:${cNoite.tx}">${noite}</span></div>`
+      : `<div class="cell-slot" style="background:#f5f7ff"><span class="slot-empty">— noite</span></div>`;
+
+    cells += `<div class="cal-cell${isToday?' today':''}${isWeekend?' weekend':''}" onclick="openModal('${date}')">
+      <div class="cal-day-num">${d}</div>
+      <div class="cell-slots">${diaSlot}${noiteSlot}</div>
+    </div>`;
+  }
+
+  // Next month padding
+  const total = Math.ceil((firstDay+daysInMonth)/7)*7;
+  for (let d = 1; d <= total-firstDay-daysInMonth; d++)
+    cells += `<div class="cal-cell other-month"><div class="cal-day-num">${d}</div></div>`;
+
+  document.getElementById('cal-body').innerHTML = cells;
+}
+
+
+
+// ── LIST ──
+function renderList() {
+  const md = monthData();
+  const daysInMonth = new Date(vy, vm+1, 0).getDate();
+  const firstDow    = (new Date(vy, vm, 1).getDay() + 6) % 7; // Mon=0
+  let html = '', weekHtml = '', weekNum = 0;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = ds(d);
+    const dow  = new Date(vy, vm, d).getDay();
+    const isToday = date === TODAY;
+    const newWeek = Math.floor((d + firstDow - 1) / 7);
+
+    if (newWeek > weekNum) {
+      weekNum = newWeek;
+      if (weekHtml) html += weekHtml + '</div>';
+      html += `<div class="list-week"><div class="week-label">Semana ${weekNum}</div>`;
+      weekHtml = '';
+    }
+
+    const dia   = md[date]?.[T_DIA]   || '';
+    const noite = md[date]?.[T_NOITE] || '';
+    const cDia   = docColor(dia);
+    const cNoite = docColor(noite);
+
+    const diaSlotBg   = dia   ? cDia.bg   : 'var(--white)';
+    const noiteSlotBg = noite ? cNoite.bg : 'var(--white)';
+    weekHtml += `<div class="list-row${isToday?' today-row':''}" onclick="openModal('${date}')">
+      <div class="list-date">
+        <div class="list-date-num">${d}</div>
+        <div class="list-date-day">${DAYS_SHORT[dow]}</div>
+      </div>
+      <div class="list-slot" style="background:${diaSlotBg}">
+        <div class="slot-label dia">☀ 7h–19h</div>
+        ${dia
+          ? `<span class="slot-doc" style="color:${cDia.tx}">${dia}</span>`
+          : `<div class="slot-empty">—</div>`}
+      </div>
+      <div class="list-slot" style="background:${noiteSlotBg}">
+        <div class="slot-label noite">🌙 19h–7h</div>
+        ${noite
+          ? `<span class="slot-doc" style="color:${cNoite.tx}">${noite}</span>`
+          : `<div class="slot-empty">—</div>`}
+      </div>
+    </div>`;
+  }
+  if (weekHtml) html += weekHtml + '</div>';
+  document.getElementById('list-body').innerHTML = html || '<div style="padding:32px;text-align:center;color:var(--gray-400)">Sem dados neste mês</div>';
+}
+
+// ── MODAL ──
+function openModal(date) {
+  editDate = date;
+  const md = monthData();
+  const [y, m, d] = date.split('-');
+  const dow = new Date(y, m-1, d).getDay();
+
+  document.getElementById('modal-title').textContent = 'Editar plantão';
+  document.getElementById('modal-sub').textContent   = `${DAYS_FULL[dow]}, ${parseInt(d)} de ${MONTHS[parseInt(m)-1]} de ${y}`;
+  document.getElementById('inp-dia').value   = md[date]?.[T_DIA]   || '';
+  document.getElementById('inp-noite').value = md[date]?.[T_NOITE] || '';
+
+  const doctors = allDoctors();
+  const makeChips = (containerId, inputId) => {
+    document.getElementById(containerId).innerHTML = doctors.map(name => {
+      const c = docColor(name);
+      return `<button class="chip" style="background:${c.bg};color:${c.tx}"
+        onclick="document.getElementById('${inputId}').value='${name.replace(/'/g,"\\'")}'">
+        ${name}</button>`;
+    }).join('');
+  };
+  makeChips('chips-dia',   'inp-dia');
+  makeChips('chips-noite', 'inp-noite');
+
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('inp-dia').focus(), 50);
+}
+function closeOverlay(e) { if (e.target.id==='overlay') closeModal(); }
+function closeModal()    { document.getElementById('overlay').classList.remove('open'); editDate = null; }
+function clearEntry() {
+  if (!editDate) return;
+  const data = load(), k = monthKey();
+  if (data[k]) delete data[k][editDate];
+  persist(data); closeModal(); render(); toast('Dia limpo');
+}
+function saveEntry() {
+  if (!editDate) return;
+  const dia   = document.getElementById('inp-dia').value.trim();
+  const noite = document.getElementById('inp-noite').value.trim();
+  const data = load(), k = monthKey();
+  if (!data[k]) data[k] = {};
+  if (dia || noite) data[k][editDate] = { [T_DIA]: dia, [T_NOITE]: noite };
+  else delete data[k][editDate];
+  persist(data); closeModal(); render(); toast('✓ Salvo');
+}
+
+// ── EXPORT ──
+function exportCSV() {
+  const md = monthData();
+  const daysInMonth = new Date(vy, vm+1, 0).getDate();
+  const rows = [['Data','Dia da Semana','7h–19h (Dia)','19h–7h (Noite)']];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = ds(d);
+    const dow  = new Date(vy, vm, d).getDay();
+    rows.push([date, DAYS_FULL[dow], md[date]?.[T_DIA]||'', md[date]?.[T_NOITE]||'']);
+  }
+  const csv = rows.map(r => r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'}));
+  a.download = `escala_uti_${MONTHS[vm].toLowerCase()}_${vy}.csv`;
+  a.click(); toast('⬇ CSV exportado!');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') closeModal();
+  if (e.key==='Enter' && document.getElementById('overlay').classList.contains('open') && e.target.tagName==='INPUT') saveEntry();
+});
+
+function exportViewer() {
+  var b64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ+CjxtZXRhIGNoYXJzZXQ9IlVURi04Ij4KPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xLjAiPgo8dGl0bGU+RXNjYWxhIFVUSSDigJQgSG9zcGl0YWwgZGUgSWxow6l1cyBbTGVpdHVyYV08L3RpdGxlPgo8bGluayBocmVmPSJodHRwczovL2ZvbnRzLmdvb2dsZWFwaXMuY29tL2NzczI/ZmFtaWx5PUludGVyOndnaHRANDAwOzUwMDs2MDA7NzAwJmRpc3BsYXk9c3dhcCIgcmVsPSJzdHlsZXNoZWV0Ij4KPHN0eWxlPgoqLCAqOjpiZWZvcmUsICo6OmFmdGVyIHsgYm94LXNpemluZzogYm9yZGVyLWJveDsgbWFyZ2luOiAwOyBwYWRkaW5nOiAwOyB9Cgo6cm9vdCB7CiAgLS13aGl0ZTogI2ZmZmZmZjsKICAtLWdyYXktNTA6ICNmOGY5ZmE7CiAgLS1ncmF5LTEwMDogI2YxZjNmNTsKICAtLWdyYXktMjAwOiAjZTllY2VmOwogIC0tZ3JheS0zMDA6ICNkZWUyZTY7CiAgLS1ncmF5LTQwMDogI2NlZDRkYTsKICAtLWdyYXktNTAwOiAjYWRiNWJkOwogIC0tZ3JheS02MDA6ICM2Yzc1N2Q7CiAgLS1ncmF5LTcwMDogIzQ5NTA1NzsKICAtLWdyYXktODAwOiAjMzQzYTQwOwogIC0tZ3JheS05MDA6ICMyMTI1Mjk7CiAgLS1ibHVlLTUwOiAgI2U3ZjVmZjsKICAtLWJsdWUtNDAwOiAjNzRjMGZjOwogIC0tYmx1ZS01MDA6ICMzMzlhZjA7CiAgLS1ibHVlLTYwMDogIzIyOGJlNjsKICAtLWJsdWUtNzAwOiAjMWM3ZWQ2OwogIC0tdGVhbC01MDogICNlNmZjZjU7CiAgLS10ZWFsLTYwMDogIzBjYTY3ODsKICAtLXRlYWwtNzAwOiAjMDk5MjY4OwogIC0tZm9udDogJ0ludGVyJywgc3lzdGVtLXVpLCBzYW5zLXNlcmlmOwogIC0tcmFkaXVzOiA4cHg7CiAgLS1zaGFkb3ctc206IDAgMXB4IDNweCByZ2JhKDAsMCwwLC4wNiksIDAgMXB4IDJweCByZ2JhKDAsMCwwLC4wNCk7CiAgLS1zaGFkb3c6IDAgNHB4IDEycHggcmdiYSgwLDAsMCwuMDgpOwp9Cgpib2R5IHsKICBmb250LWZhbWlseTogdmFyKC0tZm9udCk7CiAgYmFja2dyb3VuZDogdmFyKC0tZ3JheS01MCk7CiAgY29sb3I6IHZhcigtLWdyYXktOTAwKTsKICBtaW4taGVpZ2h0OiAxMDB2aDsKICBmb250LXNpemU6IDE0cHg7Cn0KCi8qIOKUgOKUgCBIRUFERVIgKGlkw6pudGljbyDDoCBBZ2VuZGEpIOKUgOKUgCAqLwouaGVhZGVyIHsKICBiYWNrZ3JvdW5kOiB2YXIoLS13aGl0ZSk7CiAgYm9yZGVyLWJvdHRvbTogMXB4IHNvbGlkIHZhcigtLWdyYXktMjAwKTsKICBwYWRkaW5nOiAwIDI4cHg7CiAgZGlzcGxheTogZmxleDsgYWxpZ24taXRlbXM6IGNlbnRlcjsganVzdGlmeS1jb250ZW50OiBzcGFjZS1iZXR3ZWVuOwogIGhlaWdodDogNjBweDsgcG9zaXRpb246IHN0aWNreTsgdG9wOiAwOyB6LWluZGV4OiA1MDsKICBib3gtc2hhZG93OiB2YXIoLS1zaGFkb3ctc20pOwp9Ci5oZWFkZXItbGVmdCB7IGRpc3BsYXk6IGZsZXg7IGFsaWduLWl0ZW1zOiBjZW50ZXI7IGdhcDogMTJweDsgfQouaGVhZGVyLWJhZGdlIHsKICBiYWNrZ3JvdW5kOiB2YXIoLS1ibHVlLTYwMCk7IGNvbG9yOiB3aGl0ZTsKICBmb250LXNpemU6IDExcHg7IGZvbnQtd2VpZ2h0OiA3MDA7IGxldHRlci1zcGFjaW5nOiAuMDZlbTsKICB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOyBwYWRkaW5nOiAzcHggMTBweDsgYm9yZGVyLXJhZGl1czogMjBweDsKfQouaGVhZGVyLXRpdGxlIHsgZm9udC1zaXplOiAxNnB4OyBmb250LXdlaWdodDogNjAwOyB9Ci5oZWFkZXItcmlnaHQgeyBkaXNwbGF5OiBmbGV4OyBhbGlnbi1pdGVtczogY2VudGVyOyBnYXA6IDEwcHg7IH0KCi8qIOKUgOKUgCBDT05UUk9MUyAoaWTDqm50aWNvIMOgIEFnZW5kYSkg4pSA4pSAICovCi5jb250cm9scyB7CiAgYmFja2dyb3VuZDogdmFyKC0td2hpdGUpOyBib3JkZXItYm90dG9tOiAxcHggc29saWQgdmFyKC0tZ3JheS0yMDApOwogIHBhZGRpbmc6IDE0cHggMjhweDsgZGlzcGxheTogZmxleDsgYWxpZ24taXRlbXM6IGNlbnRlcjsgZ2FwOiAxMHB4OyBmbGV4LXdyYXA6IHdyYXA7Cn0KLm1vbnRoLW5hdiB7IGRpc3BsYXk6IGZsZXg7IGFsaWduLWl0ZW1zOiBjZW50ZXI7IGdhcDogOHB4OyB9Ci5tb250aC1sYWJlbCB7IGZvbnQtc2l6ZTogMTVweDsgZm9udC13ZWlnaHQ6IDYwMDsgbWluLXdpZHRoOiAxODBweDsgdGV4dC1hbGlnbjogY2VudGVyOyB9Ci5idG4gewogIGRpc3BsYXk6IGlubGluZS1mbGV4OyBhbGlnbi1pdGVtczogY2VudGVyOyBnYXA6IDVweDsKICBmb250LWZhbWlseTogdmFyKC0tZm9udCk7IGZvbnQtc2l6ZTogMTNweDsgZm9udC13ZWlnaHQ6IDUwMDsKICBwYWRkaW5nOiA3cHggMTRweDsgYm9yZGVyLXJhZGl1czogdmFyKC0tcmFkaXVzKTsKICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1ncmF5LTMwMCk7IGJhY2tncm91bmQ6IHZhcigtLXdoaXRlKTsKICBjb2xvcjogdmFyKC0tZ3JheS03MDApOyBjdXJzb3I6IHBvaW50ZXI7IHRyYW5zaXRpb246IGFsbCAuMTVzOwp9Ci5idG46aG92ZXIgeyBiYWNrZ3JvdW5kOiB2YXIoLS1ncmF5LTEwMCk7IH0KLmJ0bi1wcmltYXJ5IHsgYmFja2dyb3VuZDogdmFyKC0tYmx1ZS02MDApOyBib3JkZXItY29sb3I6IHZhcigtLWJsdWUtNjAwKTsgY29sb3I6IHdoaXRlOyB9Ci5idG4tcHJpbWFyeTpob3ZlciB7IGJhY2tncm91bmQ6IHZhcigtLWJsdWUtNzAwKTsgYm9yZGVyLWNvbG9yOiB2YXIoLS1ibHVlLTcwMCk7IH0KLmJ0bi1zbSB7IHBhZGRpbmc6IDVweCAxMHB4OyBmb250LXNpemU6IDEycHg7IH0KLnNlcCB7IHdpZHRoOiAxcHg7IGhlaWdodDogMjRweDsgYmFja2dyb3VuZDogdmFyKC0tZ3JheS0yMDApOyB9CgovKiDilIDilIAgVklFVyBUT0dHTEUgKGlkw6pudGljbyDDoCBBZ2VuZGEpIOKUgOKUgCAqLwoudmlldy10b2dnbGUgeyBkaXNwbGF5OiBmbGV4OyBnYXA6IDRweDsgfQoudmlldy1idG4gewogIHBhZGRpbmc6IDVweCAxMnB4OyBib3JkZXItcmFkaXVzOiA2cHg7IGZvbnQtc2l6ZTogMTJweDsgZm9udC13ZWlnaHQ6IDUwMDsKICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1ncmF5LTMwMCk7IGJhY2tncm91bmQ6IHZhcigtLXdoaXRlKTsgY3Vyc29yOiBwb2ludGVyOwogIGZvbnQtZmFtaWx5OiB2YXIoLS1mb250KTsgY29sb3I6IHZhcigtLWdyYXktNzAwKTsgdHJhbnNpdGlvbjogYWxsIC4xNXM7Cn0KLnZpZXctYnRuLmFjdGl2ZSB7IGJhY2tncm91bmQ6IHZhcigtLWdyYXktOTAwKTsgYm9yZGVyLWNvbG9yOiB2YXIoLS1ncmF5LTkwMCk7IGNvbG9yOiB3aGl0ZTsgfQoKLyog4pSA4pSAIENPVU5URVIgQkFSIChzdWJzdGl0dWkgbGVnZW5kLWJhciBkYSBBZ2VuZGEpIOKUgOKUgCAqLwouY291bnRlci1iYXIgewogIHBhZGRpbmc6IDEwcHggMjhweDsgYmFja2dyb3VuZDogdmFyKC0td2hpdGUpOwogIGJvcmRlci1ib3R0b206IDFweCBzb2xpZCB2YXIoLS1ncmF5LTIwMCk7CiAgZGlzcGxheTogZmxleDsgYWxpZ24taXRlbXM6IGNlbnRlcjsgZ2FwOiAxMHB4OyBmbGV4LXdyYXA6IHdyYXA7CiAgbWluLWhlaWdodDogNDJweDsKfQouY291bnRlci1sYWJlbCB7CiAgZm9udC1zaXplOiAxMXB4OyBmb250LXdlaWdodDogNzAwOyB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOwogIGxldHRlci1zcGFjaW5nOiAuMDdlbTsgY29sb3I6IHZhcigtLWdyYXktNTAwKTsKfQouY291bnRlci1jaGlwIHsKICBkaXNwbGF5OiBpbmxpbmUtZmxleDsgYWxpZ24taXRlbXM6IGNlbnRlcjsgZ2FwOiA2cHg7CiAgZm9udC1zaXplOiAxMnB4OyBmb250LXdlaWdodDogNjAwOyBwYWRkaW5nOiAzcHggMTFweDsgYm9yZGVyLXJhZGl1czogMjBweDsKfQouY291bnRlci1uIHsKICBiYWNrZ3JvdW5kOiByZ2JhKDAsMCwwLC4xMik7IGJvcmRlci1yYWRpdXM6IDIwcHg7CiAgcGFkZGluZzogMCA1cHg7IGZvbnQtc2l6ZTogMTBweDsgZm9udC13ZWlnaHQ6IDcwMDsKfQoKLyog4pSA4pSAIENBTEVOREFSIFZJRVcg4pSA4pSAICovCi5jYWwtd3JhcCB7IHBhZGRpbmc6IDIwcHggMjhweDsgfQouY2FsLWdyaWQgeyBkaXNwbGF5OiBncmlkOyBncmlkLXRlbXBsYXRlLWNvbHVtbnM6IHJlcGVhdCg3LCAxZnIpOyBnYXA6IDRweDsgfQouY2FsLWhlYWRlci1kYXkgewogIHRleHQtYWxpZ246IGNlbnRlcjsgZm9udC1zaXplOiAxMXB4OyBmb250LXdlaWdodDogNzAwOwogIHRleHQtdHJhbnNmb3JtOiB1cHBlcmNhc2U7IGxldHRlci1zcGFjaW5nOiAuMDdlbTsKICBjb2xvcjogdmFyKC0tZ3JheS01MDApOyBwYWRkaW5nOiA2cHggMDsKfQouY2FsLWNlbGwgewogIGJhY2tncm91bmQ6IHZhcigtLXdoaXRlKTsgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tZ3JheS0yMDApOwogIGJvcmRlci1yYWRpdXM6IHZhcigtLXJhZGl1cyk7IG1pbi1oZWlnaHQ6IDkwcHg7CiAgY3Vyc29yOiBwb2ludGVyOyB0cmFuc2l0aW9uOiBib3JkZXItY29sb3IgLjEycywgYm94LXNoYWRvdyAuMTJzOwogIG92ZXJmbG93OiBoaWRkZW47IGRpc3BsYXk6IGZsZXg7IGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47Cn0KLmNhbC1jZWxsOmhvdmVyIHsgYm9yZGVyLWNvbG9yOiB2YXIoLS1ibHVlLTQwMCk7IGJveC1zaGFkb3c6IDAgMCAwIDJweCB2YXIoLS1ibHVlLTUwKTsgfQouY2FsLWNlbGwub3RoZXItbW9udGggeyBvcGFjaXR5OiAuMzU7IHBvaW50ZXItZXZlbnRzOiBub25lOyB9Ci5jYWwtY2VsbC50b2RheSB7IGJvcmRlcjogMnB4IHNvbGlkIHZhcigtLWJsdWUtNTAwKTsgfQouY2FsLWNlbGwudG9kYXkgLmNhbC1kYXktbnVtIHsgY29sb3I6IHZhcigtLWJsdWUtNjAwKTsgfQouY2FsLWRheS1udW0geyBmb250LXNpemU6IDExcHg7IGZvbnQtd2VpZ2h0OiA3MDA7IGNvbG9yOiB2YXIoLS1ncmF5LTYwMCk7IHBhZGRpbmc6IDVweCA3cHggM3B4OyBmbGV4LXNocmluazogMDsgfQouY2VsbC1zbG90cyB7IGRpc3BsYXk6IGZsZXg7IGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47IGZsZXg6IDE7IH0KLmNlbGwtc2xvdCB7CiAgZmxleDogMTsgZGlzcGxheTogZmxleDsgYWxpZ24taXRlbXM6IGNlbnRlcjsganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgcGFkZGluZzogMnB4IDRweDsgZ2FwOiA0cHg7IG1pbi1oZWlnaHQ6IDA7CiAgYm9yZGVyLXRvcDogMXB4IHNvbGlkIHJnYmEoMCwwLDAsLjA2KTsKICB0cmFuc2l0aW9uOiBmaWx0ZXIgLjEyczsKICB0ZXh0LWFsaWduOiBjZW50ZXI7Cn0KLmNlbGwtc2xvdDpmaXJzdC1jaGlsZCB7IGJvcmRlci10b3A6IG5vbmU7IH0KLmNhbC1jZWxsOmhvdmVyIC5jZWxsLXNsb3QgeyBmaWx0ZXI6IGJyaWdodG5lc3MoLjk3KTsgfQouc2xvdC1pY29uIHsgZm9udC1zaXplOiA5cHg7IGZsZXgtc2hyaW5rOiAwOyBvcGFjaXR5OiAxOyBsaW5lLWhlaWdodDogMTsgfQouc2xvdC1uYW1lIHsgZm9udC1zaXplOiAxMHB4OyBmb250LXdlaWdodDogNjAwOyBvdmVyZmxvdzogaGlkZGVuOyB0ZXh0LW92ZXJmbG93OiBlbGxpcHNpczsgd2hpdGUtc3BhY2U6IG5vd3JhcDsgZmxleDogMTsgfQouc2xvdC1lbXB0eSB7IGZvbnQtc2l6ZTogOXB4OyBvcGFjaXR5OiAuMzsgZm9udC1zdHlsZTogaXRhbGljOyB9CgovKiDilIDilIAgTElTVCBWSUVXIOKUgOKUgCAqLwoubGlzdC13cmFwIHsgcGFkZGluZzogMTZweCAyOHB4OyB9Ci5saXN0LXdlZWsgeyBtYXJnaW4tYm90dG9tOiAyMHB4OyB9Ci53ZWVrLWxhYmVsIHsKICBmb250LXNpemU6IDExcHg7IGZvbnQtd2VpZ2h0OiA3MDA7IHRleHQtdHJhbnNmb3JtOiB1cHBlcmNhc2U7CiAgbGV0dGVyLXNwYWNpbmc6IC4wOGVtOyBjb2xvcjogdmFyKC0tZ3JheS01MDApOwogIHBhZGRpbmc6IDZweCAwOyBtYXJnaW4tYm90dG9tOiA2cHg7CiAgYm9yZGVyLWJvdHRvbTogMXB4IHNvbGlkIHZhcigtLWdyYXktMjAwKTsKfQoubGlzdC1yb3cgewogIGRpc3BsYXk6IGdyaWQ7IGdyaWQtdGVtcGxhdGUtY29sdW1uczogOTBweCAxZnIgMWZyOwogIGJhY2tncm91bmQ6IHZhcigtLXdoaXRlKTsgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tZ3JheS0yMDApOwogIGJvcmRlci1yYWRpdXM6IHZhcigtLXJhZGl1cyk7IG1hcmdpbi1ib3R0b206IDNweDsKICBvdmVyZmxvdzogaGlkZGVuOyB0cmFuc2l0aW9uOiBib3gtc2hhZG93IC4xMnM7Cn0KLmxpc3Qtcm93OmhvdmVyIHsgYm94LXNoYWRvdzogdmFyKC0tc2hhZG93LXNtKTsgfQoubGlzdC1yb3cudG9kYXktcm93IHsgYm9yZGVyLWNvbG9yOiB2YXIoLS1ibHVlLTQwMCk7IGJhY2tncm91bmQ6IHZhcigtLWJsdWUtNTApOyB9Ci5saXN0LWRhdGUgewogIHBhZGRpbmc6IDEwcHggMTJweDsgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgdmFyKC0tZ3JheS0xMDApOwogIGRpc3BsYXk6IGZsZXg7IGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47IGp1c3RpZnktY29udGVudDogY2VudGVyOwp9Ci5saXN0LWRhdGUtbnVtIHsgZm9udC1zaXplOiAxOHB4OyBmb250LXdlaWdodDogNzAwOyBsaW5lLWhlaWdodDogMTsgY29sb3I6IHZhcigtLWdyYXktOTAwKTsgfQoubGlzdC1kYXRlLWRheSB7IGZvbnQtc2l6ZTogMTBweDsgZm9udC13ZWlnaHQ6IDYwMDsgdGV4dC10cmFuc2Zvcm06IHVwcGVyY2FzZTsgY29sb3I6IHZhcigtLWdyYXktNTAwKTsgbWFyZ2luLXRvcDogMnB4OyB9Ci50b2RheS1yb3cgLmxpc3QtZGF0ZS1udW0geyBjb2xvcjogdmFyKC0tYmx1ZS02MDApOyB9Ci5saXN0LXNsb3QgewogIHBhZGRpbmc6IDhweCAxMnB4OyBib3JkZXItcmlnaHQ6IDFweCBzb2xpZCB2YXIoLS1ncmF5LTEwMCk7CiAgY3Vyc29yOiBwb2ludGVyOyB0cmFuc2l0aW9uOiBiYWNrZ3JvdW5kIC4xMnM7Cn0KLmxpc3Qtc2xvdDpsYXN0LWNoaWxkIHsgYm9yZGVyLXJpZ2h0OiBub25lOyB9Ci5saXN0LXNsb3Q6aG92ZXIgeyBiYWNrZ3JvdW5kOiB2YXIoLS1ncmF5LTUwKTsgfQouc2xvdC1sYWJlbCB7CiAgZm9udC1zaXplOiAxMHB4OyBmb250LXdlaWdodDogNzAwOyB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOwogIGxldHRlci1zcGFjaW5nOiAuMDdlbTsgbWFyZ2luLWJvdHRvbTogNHB4Owp9Ci5zbG90LWxhYmVsLmRpYSAgIHsgY29sb3I6IHZhcigtLXRlYWwtNjAwKTsgfQouc2xvdC1sYWJlbC5ub2l0ZSB7IGNvbG9yOiB2YXIoLS1ibHVlLTYwMCk7IH0KLnNsb3QtZW1wdHkgeyBmb250LXNpemU6IDEycHg7IGNvbG9yOiB2YXIoLS1ncmF5LTQwMCk7IGZvbnQtc3R5bGU6IGl0YWxpYzsgfQouc2xvdC1kb2MgewogIGZvbnQtc2l6ZTogMTNweDsgZm9udC13ZWlnaHQ6IDYwMDsgY29sb3I6IHZhcigtLWdyYXktODAwKTsKICBkaXNwbGF5OiBpbmxpbmUtYmxvY2s7IHBhZGRpbmc6IDJweCAxMHB4OyBib3JkZXItcmFkaXVzOiAyMHB4OyBtYXJnaW4tdG9wOiAycHg7Cn0KCi8qIOKUgOKUgCBNT0RBTCAoaWTDqm50aWNvIMOgIEFnZW5kYSwgYWRhcHRhZG8pIOKUgOKUgCAqLwoub3ZlcmxheSB7CiAgZGlzcGxheTogbm9uZTsgcG9zaXRpb246IGZpeGVkOyBpbnNldDogMDsKICBiYWNrZ3JvdW5kOiByZ2JhKDAsMCwwLC4zKTsgei1pbmRleDogMjAwOwogIGFsaWduLWl0ZW1zOiBjZW50ZXI7IGp1c3RpZnktY29udGVudDogY2VudGVyOwp9Ci5vdmVybGF5Lm9wZW4geyBkaXNwbGF5OiBmbGV4OyB9Ci5tb2RhbCB7CiAgYmFja2dyb3VuZDogdmFyKC0td2hpdGUpOyBib3JkZXItcmFkaXVzOiAxNHB4OyBwYWRkaW5nOiAyOHB4OwogIHdpZHRoOiA0MjBweDsgbWF4LXdpZHRoOiA5NXZ3OwogIGJveC1zaGFkb3c6IDAgMjBweCA2MHB4IHJnYmEoMCwwLDAsLjEyKTsKfQoubW9kYWwtdGl0bGUgeyBmb250LXNpemU6IDE2cHg7IGZvbnQtd2VpZ2h0OiA3MDA7IG1hcmdpbi1ib3R0b206IDNweDsgfQoubW9kYWwtc3ViICAgeyBmb250LXNpemU6IDEycHg7IGNvbG9yOiB2YXIoLS1ncmF5LTYwMCk7IG1hcmdpbi1ib3R0b206IDIycHg7IH0KLmZvcm0tZ3JvdXAgIHsgbWFyZ2luLWJvdHRvbTogMTZweDsgfQouZm9ybS1sYWJlbCAgewogIGZvbnQtc2l6ZTogMTFweDsgZm9udC13ZWlnaHQ6IDcwMDsgdGV4dC10cmFuc2Zvcm06IHVwcGVyY2FzZTsKICBsZXR0ZXItc3BhY2luZzogLjA3ZW07IGNvbG9yOiB2YXIoLS1ncmF5LTYwMCk7IG1hcmdpbi1ib3R0b206IDdweDsKICBkaXNwbGF5OiBmbGV4OyBhbGlnbi1pdGVtczogY2VudGVyOyBnYXA6IDZweDsKfQouZm9ybS1sYWJlbC1kb3QgeyB3aWR0aDogOHB4OyBoZWlnaHQ6IDhweDsgYm9yZGVyLXJhZGl1czogNTAlOyB9Ci5mb3JtLWlucHV0IHsKICB3aWR0aDogMTAwJTsgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tZ3JheS0zMDApOyBib3JkZXItcmFkaXVzOiB2YXIoLS1yYWRpdXMpOwogIHBhZGRpbmc6IDlweCAxMnB4OyBmb250LWZhbWlseTogdmFyKC0tZm9udCk7IGZvbnQtc2l6ZTogMTNweDsKICBvdXRsaW5lOiBub25lOyB0cmFuc2l0aW9uOiBib3JkZXItY29sb3IgLjE1czsKfQouZm9ybS1pbnB1dDpmb2N1cyB7IGJvcmRlci1jb2xvcjogdmFyKC0tYmx1ZS02MDApOyBib3gtc2hhZG93OiAwIDAgMCAzcHggdmFyKC0tYmx1ZS01MCk7IH0KLnF1aWNrLWNoaXBzIHsgZGlzcGxheTogZmxleDsgZmxleC13cmFwOiB3cmFwOyBnYXA6IDVweDsgbWFyZ2luLXRvcDogN3B4OyB9Ci5jaGlwIHsKICBmb250LXNpemU6IDExcHg7IGZvbnQtd2VpZ2h0OiA2MDA7IHBhZGRpbmc6IDNweCAxMHB4OyBib3JkZXItcmFkaXVzOiAyMHB4OwogIGJvcmRlcjogMXB4IHNvbGlkIHRyYW5zcGFyZW50OyBjdXJzb3I6IHBvaW50ZXI7CiAgZm9udC1mYW1pbHk6IHZhcigtLWZvbnQpOyB0cmFuc2l0aW9uOiBhbGwgLjFzOwp9Ci5jaGlwOmhvdmVyIHsgb3BhY2l0eTogLjg1OyBib3JkZXItY29sb3I6IHJnYmEoMCwwLDAsLjE1KTsgfQoubW9kYWwtYWN0aW9ucyB7IGRpc3BsYXk6IGZsZXg7IGdhcDogOHB4OyBqdXN0aWZ5LWNvbnRlbnQ6IGZsZXgtZW5kOyBtYXJnaW4tdG9wOiAyMHB4OyB9CgovKiDilIDilIAgVE9BU1QgKGlkw6pudGljbyDDoCBBZ2VuZGEpIOKUgOKUgCAqLwoudG9hc3QgewogIHBvc2l0aW9uOiBmaXhlZDsgYm90dG9tOiAyNHB4OyByaWdodDogMjRweDsKICBiYWNrZ3JvdW5kOiB2YXIoLS1ncmF5LTkwMCk7IGNvbG9yOiB3aGl0ZTsKICBwYWRkaW5nOiAxMXB4IDE4cHg7IGJvcmRlci1yYWRpdXM6IDhweDsgZm9udC1zaXplOiAxM3B4OyBmb250LXdlaWdodDogNTAwOwogIHotaW5kZXg6IDk5OTsgb3BhY2l0eTogMDsgdHJhbnNmb3JtOiB0cmFuc2xhdGVZKDhweCk7CiAgdHJhbnNpdGlvbjogYWxsIC4yczsgcG9pbnRlci1ldmVudHM6IG5vbmU7IGJveC1zaGFkb3c6IHZhcigtLXNoYWRvdyk7Cn0KLnRvYXN0LnNob3cgeyBvcGFjaXR5OiAxOyB0cmFuc2Zvcm06IHRyYW5zbGF0ZVkoMCk7IH0KCkBtZWRpYSBwcmludCB7CiAgLmhlYWRlci1yaWdodCwgLmJ0biwgLm92ZXJsYXksIC50b2FzdCwgLnZpZXctdG9nZ2xlIHsgZGlzcGxheTogbm9uZSAhaW1wb3J0YW50OyB9CiAgLmNhbC13cmFwLCAubGlzdC13cmFwIHsgcGFkZGluZzogMDsgfQogIGJvZHkgeyBiYWNrZ3JvdW5kOiB3aGl0ZTsgZm9udC1zaXplOiAxMnB4OyAtd2Via2l0LXByaW50LWNvbG9yLWFkanVzdDogZXhhY3Q7IHByaW50LWNvbG9yLWFkanVzdDogZXhhY3Q7IH0KfQo8L3N0eWxlPgo8L2hlYWQ+Cjxib2R5PgoKPGhlYWRlciBjbGFzcz0iaGVhZGVyIj4KICA8ZGl2IGNsYXNzPSJoZWFkZXItbGVmdCI+CiAgICA8c3BhbiBjbGFzcz0iaGVhZGVyLWJhZGdlIj5VVEk8L3NwYW4+CiAgICA8c3BhbiBjbGFzcz0iaGVhZGVyLXRpdGxlIj5Fc2NhbGEg4oCUIEhvc3BpdGFsIGRlIElsaMOpdXM8L3NwYW4+CiAgPC9kaXY+CiAgPGRpdiBjbGFzcz0iaGVhZGVyLXJpZ2h0Ij48c3BhbiBpZD0ibGFzdC11cGRhdGVkIiBzdHlsZT0iZm9udC1zaXplOjEycHg7Y29sb3I6IzZjNzU3ZCI+PC9zcGFuPjwvZGl2Pgo8L2hlYWRlcj4KCjxkaXYgc3R5bGU9ImJhY2tncm91bmQ6I2U3ZjVmZjtib3JkZXItYm90dG9tOjFweCBzb2xpZCAjNzRjMGZjO3BhZGRpbmc6OHB4IDI4cHg7Zm9udC1zaXplOjEycHg7Zm9udC13ZWlnaHQ6NTAwO2NvbG9yOiMxYzdlZDYiPvCflJIgVmlzdWFsaXphw6fDo28gc29tZW50ZSBsZWl0dXJhPC9kaXY+CjxkaXYgY2xhc3M9ImNvbnRyb2xzIj4KICA8ZGl2IGNsYXNzPSJtb250aC1uYXYiPgogICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1zbSIgb25jbGljaz0iY2hhbmdlTW9udGgoLTEpIj7igLkgQW50ZXJpb3I8L2J1dHRvbj4KICAgIDxkaXYgY2xhc3M9Im1vbnRoLWxhYmVsIiBpZD0ibW9udGgtbGFiZWwiPjwvZGl2PgogICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1zbSIgb25jbGljaz0iY2hhbmdlTW9udGgoMSkiPlByw7N4aW1vIOKAujwvYnV0dG9uPgogIDwvZGl2PgogIDxkaXYgY2xhc3M9InNlcCI+PC9kaXY+CiAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1zbSIgb25jbGljaz0iZ29Ub2RheSgpIj5Ib2plPC9idXR0b24+CiAgPGRpdiBjbGFzcz0ic2VwIj48L2Rpdj4KICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLXNtIGJ0bi1wcmltYXJ5IiBvbmNsaWNrPSJlbnN1cmVNb250aCgpIj4rIE5vdm8gbcOqczwvYnV0dG9uPgogIDxkaXYgY2xhc3M9InNlcCI+PC9kaXY+CiAgPGRpdiBjbGFzcz0idmlldy10b2dnbGUiPgogICAgPGJ1dHRvbiBjbGFzcz0idmlldy1idG4gYWN0aXZlIiBpZD0iYnRuLWNhbCIgb25jbGljaz0ic2V0VmlldygnY2FsJykiPvCfk4UgQ2FsZW5kw6FyaW88L2J1dHRvbj4KICAgIDxidXR0b24gY2xhc3M9InZpZXctYnRuIiBpZD0iYnRuLWxpc3QiIG9uY2xpY2s9InNldFZpZXcoJ2xpc3QnKSI+4piwIExpc3RhPC9idXR0b24+CiAgPC9kaXY+CjwvZGl2PgoKPGRpdiBjbGFzcz0iY291bnRlci1iYXIiIGlkPSJjb3VudGVyLWJhciI+CiAgPHNwYW4gY2xhc3M9ImNvdW50ZXItbGFiZWwiPlR1cm5vcyBlc3RlIG3DqnM6PC9zcGFuPgo8L2Rpdj4KCjxkaXYgaWQ9InZpZXctY2FsIj4KICA8ZGl2IGNsYXNzPSJjYWwtd3JhcCI+CiAgICA8ZGl2IGNsYXNzPSJjYWwtZ3JpZCIgaWQ9ImNhbC1oZWFkZXIiPjwvZGl2PgogICAgPGRpdiBjbGFzcz0iY2FsLWdyaWQiIGlkPSJjYWwtYm9keSIgc3R5bGU9Im1hcmdpbi10b3A6NHB4Ij48L2Rpdj4KICA8L2Rpdj4KPC9kaXY+Cgo8ZGl2IGlkPSJ2aWV3LWxpc3QiIHN0eWxlPSJkaXNwbGF5Om5vbmUiPgogIDxkaXYgY2xhc3M9Imxpc3Qtd3JhcCIgaWQ9Imxpc3QtYm9keSI+PC9kaXY+CjwvZGl2PgoKPGRpdiBjbGFzcz0idG9hc3QiIGlkPSJ0b2FzdCI+PC9kaXY+Cgo8c2NyaXB0PgovLyDilIDilIAgQ09OU1RBTlRTIOKUgOKUgApjb25zdCBLRVkgPSAndXRpX3Y0JzsKY29uc3QgVF9ESUEgICA9ICc3IMOgcyAxOSBoJzsKY29uc3QgVF9OT0lURSA9ICcxOSDDoHMgNyBoJzsKY29uc3QgTU9OVEhTID0gWydKYW5laXJvJywnRmV2ZXJlaXJvJywnTWFyw6dvJywnQWJyaWwnLCdNYWlvJywnSnVuaG8nLCdKdWxobycsJ0Fnb3N0bycsJ1NldGVtYnJvJywnT3V0dWJybycsJ05vdmVtYnJvJywnRGV6ZW1icm8nXTsKY29uc3QgREFZU19TSE9SVCA9IFsnU2VnJywnVGVyJywnUXVhJywnUXVpJywnU2V4JywnU8OhYicsJ0RvbSddOwpjb25zdCBEQVlTX0ZVTEwgID0gWydEb21pbmdvJywnU2VndW5kYS1mZWlyYScsJ1RlcsOnYS1mZWlyYScsJ1F1YXJ0YS1mZWlyYScsJ1F1aW50YS1mZWlyYScsJ1NleHRhLWZlaXJhJywnU8OhYmFkbyddOwpjb25zdCBUT0RBWSA9IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKS5zbGljZSgwLDEwKTsKCi8vIOKUgOKUgCBET0NUT1IgQ09MT1JTIOKAlCAxNiBkaXN0aW5jdCBsaWdodC1iZyBwaWxscyDilIDilIAKY29uc3QgUEFMRVRURSA9IFsKICB7Ymc6JyNkYmU0ZmYnLHR4OicjM2I1YmRiJ30se2JnOicjZDNmOWQ4Jyx0eDonIzJiOGEzZSd9LHtiZzonI2ZmZThjYycsdHg6JyNkOTQ4MGYnfSwKICB7Ymc6JyNmM2Q5ZmEnLHR4OicjODYyZTljJ30se2JnOicjZmZmM2JmJyx0eDonI2MwN2EwMCd9LHtiZzonI2ZmZDZlMCcsdHg6JyNjMjI1NWMnfSwKICB7Ymc6JyNjM2ZhZTgnLHR4OicjMDg3ZjViJ30se2JnOicjZDBlYmZmJyx0eDonIzE4NjRhYid9LHtiZzonI2Y4ZjBmYycsdHg6JyM2NzQxZDknfSwKICB7Ymc6JyNmZmUzZTMnLHR4OicjYzkyYTJhJ30se2JnOicjZTNmYWZjJyx0eDonIzBjODU5OSd9LHtiZzonI2ViZmJlZScsdHg6JyMyZjllNDQnfSwKICB7Ymc6JyNmZmY0ZTYnLHR4OicjZDk0ODBmJ30se2JnOicjZjRmY2UzJyx0eDonIzRjN2EzNCd9LHtiZzonI2ZjZThmMycsdHg6JyNhNjFlNGQnfSwKICB7Ymc6JyNlOGY0ZmQnLHR4OicjMTU2NWMwJ30sCl07CmxldCBfY29sb3JNYXAgPSB7fSwgX2NvbG9ySWR4ID0gMDsKZnVuY3Rpb24gZG9jQ29sb3IobmFtZSkgewogIGlmICghbmFtZSkgcmV0dXJuIHtiZzonI2YxZjNmNScsIHR4OicjODY4ZTk2J307CiAgaWYgKCFfY29sb3JNYXBbbmFtZV0pIF9jb2xvck1hcFtuYW1lXSA9IFBBTEVUVEVbX2NvbG9ySWR4KysgJSBQQUxFVFRFLmxlbmd0aF07CiAgcmV0dXJuIF9jb2xvck1hcFtuYW1lXTsKfQpmdW5jdGlvbiB3YXJtQ29sb3JzKGRhdGEpIHsKICBjb25zdCBuYW1lcyA9IG5ldyBTZXQoKTsKICBPYmplY3QudmFsdWVzKGRhdGEpLmZvckVhY2gobSA9PiBPYmplY3QudmFsdWVzKG0pLmZvckVhY2goZCA9PiBbZFtUX0RJQV0sZFtUX05PSVRFXV0uZm9yRWFjaChuID0+IHsgaWYobiAmJiBuLnRyaW0oKSkgbmFtZXMuYWRkKG4udHJpbSgpKTsgfSkpKTsKICBjb25zdCBzb3J0ZWQgPSBbLi4ubmFtZXNdLnNvcnQoKTsKICAvLyBQcmUtYXNzaWduIGFsbCBjb2xvcnMgaW4gYWxwaGFiZXRpY2FsIG9yZGVyIGZpcnN0CiAgc29ydGVkLmZvckVhY2gobiA9PiBkb2NDb2xvcihuKSk7CiAgLy8gVGhlbiBzd2FwIEJydW5hIDwtPiBIZWl0b3IKICBpZiAoX2NvbG9yTWFwWydCcnVuYSddICYmIF9jb2xvck1hcFsnSGVpdG9yJ10pIHsKICAgIGNvbnN0IHRtcCA9IF9jb2xvck1hcFsnQnJ1bmEnXTsKICAgIF9jb2xvck1hcFsnQnJ1bmEnXSA9IF9jb2xvck1hcFsnSGVpdG9yJ107CiAgICBfY29sb3JNYXBbJ0hlaXRvciddID0gdG1wOwogIH0KfQpmdW5jdGlvbiBhbGxEb2N0b3JzKCkgewogIGNvbnN0IGRhdGEgPSBsb2FkKCksIHMgPSBuZXcgU2V0KCk7CiAgT2JqZWN0LnZhbHVlcyhkYXRhKS5mb3JFYWNoKG0gPT4gT2JqZWN0LnZhbHVlcyhtKS5mb3JFYWNoKGQgPT4gW2RbVF9ESUFdLGRbVF9OT0lURV1dLmZvckVhY2gobiA9PiB7IGlmKG4gJiYgbi50cmltKCkpIHMuYWRkKG4udHJpbSgpKTsgfSkpKTsKICByZXR1cm4gWy4uLnNdLnNvcnQoKTsKfQoKLy8g4pSA4pSAIERBVEEg4pSA4pSACmNvbnN0IFNFRUQgPSAvKnx8U0VFRHx8Ki87CgpmdW5jdGlvbiBsb2FkKCkgewogIHRyeSB7IHJldHVybiBKU09OLnBhcnNlKGxvY2FsU3RvcmFnZS5nZXRJdGVtKEtFWSkgfHwgJ251bGwnKSB8fCBTRUVEOyB9IGNhdGNoIHsgcmV0dXJuIFNFRUQ7IH0KfQpmdW5jdGlvbiBwZXJzaXN0KGQpIHsgbG9jYWxTdG9yYWdlLnNldEl0ZW0oS0VZLCBKU09OLnN0cmluZ2lmeShkKSk7IH0KaWYgKCFsb2NhbFN0b3JhZ2UuZ2V0SXRlbShLRVkpKSBwZXJzaXN0KFNFRUQpOwoKZnVuY3Rpb24gbW9udGhLZXkoKSB7CiAgcmV0dXJuIGBFU0NBTEEgVVRJIC0gSEkgLSAke01PTlRIU1t2bV0udG9VcHBlckNhc2UoKX0gJHt2eX1gOwp9CmZ1bmN0aW9uIG1vbnRoRGF0YSgpIHsgcmV0dXJuIGxvYWQoKVttb250aEtleSgpXSB8fCB7fTsgfQpmdW5jdGlvbiBkcyhkKSB7IHJldHVybiBgJHt2eX0tJHtTdHJpbmcodm0rMSkucGFkU3RhcnQoMiwnMCcpfS0ke1N0cmluZyhkKS5wYWRTdGFydCgyLCcwJyl9YDsgfQoKLy8g4pSA4pSAIFNUQVRFIOKUgOKUgApjb25zdCBub3cgPSBuZXcgRGF0ZSgpOwpsZXQgdnkgPSBub3cuZ2V0RnVsbFllYXIoKSwgdm0gPSBub3cuZ2V0TW9udGgoKTsKbGV0IGN1cnJlbnRWaWV3ID0gJ2NhbCc7CmxldCBlZGl0RGF0ZSA9IG51bGw7CgovLyDilIDilIAgTkFWIOKUgOKUgApmdW5jdGlvbiBjaGFuZ2VNb250aChkaXIpIHsKICB2bSArPSBkaXI7CiAgaWYgKHZtIDwgMCkgeyB2bSA9IDExOyB2eS0tOyB9CiAgaWYgKHZtID4gMTEpIHsgdm0gPSAwOyB2eSsrOyB9CiAgcmVuZGVyKCk7Cn0KZnVuY3Rpb24gZ29Ub2RheSgpIHsgdnkgPSBub3cuZ2V0RnVsbFllYXIoKTsgdm0gPSBub3cuZ2V0TW9udGgoKTsgcmVuZGVyKCk7IH0KZnVuY3Rpb24gc2V0Vmlldyh2KSB7CiAgY3VycmVudFZpZXcgPSB2OwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCd2aWV3LWNhbCcpLnN0eWxlLmRpc3BsYXkgID0gdj09PSdjYWwnICA/ICcnIDogJ25vbmUnOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCd2aWV3LWxpc3QnKS5zdHlsZS5kaXNwbGF5ID0gdj09PSdsaXN0JyA/ICcnIDogJ25vbmUnOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdidG4tY2FsJykuY2xhc3NMaXN0LnRvZ2dsZSgnYWN0aXZlJywgIHY9PT0nY2FsJyk7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2J0bi1saXN0JykuY2xhc3NMaXN0LnRvZ2dsZSgnYWN0aXZlJywgdj09PSdsaXN0Jyk7CiAgcmVuZGVyKCk7Cn0KZnVuY3Rpb24gZW5zdXJlTW9udGgoKSB7CiAgY29uc3QgZGF0YSA9IGxvYWQoKSwgayA9IG1vbnRoS2V5KCk7CiAgaWYgKCFkYXRhW2tdKSB7IGRhdGFba10gPSB7fTsgcGVyc2lzdChkYXRhKTsgfQogIHRvYXN0KGBNw6pzICIke01PTlRIU1t2bV19ICR7dnl9IiBwcm9udG9gKTsKICByZW5kZXIoKTsKfQoKLy8g4pSA4pSAIFJFTkRFUiDilIDilIAKZnVuY3Rpb24gcmVuZGVyKCkgewogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdtb250aC1sYWJlbCcpLnRleHRDb250ZW50ID0gYCR7TU9OVEhTW3ZtXX0gJHt2eX1gOwogIGlmIChjdXJyZW50VmlldyA9PT0gJ2NhbCcpIHJlbmRlckNhbCgpOwogIGVsc2UgcmVuZGVyTGlzdCgpOwogIHJlbmRlckNvdW50ZXJzKCk7Cn0KCmZ1bmN0aW9uIHJlbmRlckNvdW50ZXJzKCkgewogIGNvbnN0IG1kID0gbW9udGhEYXRhKCk7CiAgY29uc3QgY291bnRzID0ge307CiAgT2JqZWN0LnZhbHVlcyhtZCkuZm9yRWFjaChkYXkgPT4gewogICAgW2RheVtUX0RJQV0sIGRheVtUX05PSVRFXV0uZm9yRWFjaChuID0+IHsgaWYobiAmJiBuLnRyaW0oKSkgY291bnRzW24udHJpbSgpXSA9IChjb3VudHNbbi50cmltKCldfHwwKSsxOyB9KTsKICB9KTsKICBjb25zdCBzb3J0ZWQgPSBPYmplY3QuZW50cmllcyhjb3VudHMpLnNvcnQoKGEsYikgPT4gYlsxXS1hWzFdKTsKICBjb25zdCBiYXIgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY291bnRlci1iYXInKTsKICBpZiAoIXNvcnRlZC5sZW5ndGgpIHsKICAgIGJhci5pbm5lckhUTUwgPSAnPHNwYW4gY2xhc3M9ImNvdW50ZXItbGFiZWwiPlNlbSBkYWRvcyDigJQ8L3NwYW4+IDxzcGFuIHN0eWxlPSJmb250LXNpemU6MTJweDtjb2xvcjp2YXIoLS1ncmF5LTQwMCkiPmNsaXF1ZSBlbSBxdWFscXVlciBkaWEgcGFyYSBhZGljaW9uYXI8L3NwYW4+JzsKICAgIHJldHVybjsKICB9CiAgYmFyLmlubmVySFRNTCA9ICc8c3BhbiBjbGFzcz0iY291bnRlci1sYWJlbCI+VHVybm9zIGVzdGUgbcOqczo8L3NwYW4+JyArCiAgICBzb3J0ZWQubWFwKChbbmFtZSwgbl0pID0+IHsKICAgICAgY29uc3QgYyA9IGRvY0NvbG9yKG5hbWUpOwogICAgICByZXR1cm4gYDxzcGFuIGNsYXNzPSJjb3VudGVyLWNoaXAiIHN0eWxlPSJiYWNrZ3JvdW5kOiR7Yy5iZ307Y29sb3I6JHtjLnR4fSI+CiAgICAgICAgJHtuYW1lfSA8c3BhbiBjbGFzcz0iY291bnRlci1uIj4ke259PC9zcGFuPgogICAgICA8L3NwYW4+YDsKICAgIH0pLmpvaW4oJycpOwp9CgovLyDilIDilIAgQ0FMRU5EQVIg4pSA4pSACmZ1bmN0aW9uIHJlbmRlckNhbCgpIHsKICBjb25zdCBtZCA9IG1vbnRoRGF0YSgpOwogIGNvbnN0IGRheXNJbk1vbnRoID0gbmV3IERhdGUodnksIHZtKzEsIDApLmdldERhdGUoKTsKICBjb25zdCBmaXJzdERheSAgICA9IChuZXcgRGF0ZSh2eSwgdm0sIDEpLmdldERheSgpICsgNikgJSA3OyAvLyBNb249MAoKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY2FsLWhlYWRlcicpLmlubmVySFRNTCA9CiAgICBEQVlTX1NIT1JULm1hcChkID0+IGA8ZGl2IGNsYXNzPSJjYWwtaGVhZGVyLWRheSI+JHtkfTwvZGl2PmApLmpvaW4oJycpOwoKICBsZXQgY2VsbHMgPSAnJzsKICAvLyBQcmV2IG1vbnRoIHBhZGRpbmcKICBjb25zdCBwcmV2RGF5cyA9IG5ldyBEYXRlKHZ5LCB2bSwgMCkuZ2V0RGF0ZSgpOwogIGZvciAobGV0IGkgPSBmaXJzdERheS0xOyBpID49IDA7IGktLSkKICAgIGNlbGxzICs9IGA8ZGl2IGNsYXNzPSJjYWwtY2VsbCBvdGhlci1tb250aCI+PGRpdiBjbGFzcz0iY2FsLWRheS1udW0iPiR7cHJldkRheXMtaX08L2Rpdj48L2Rpdj5gOwoKICAvLyBUaGlzIG1vbnRoCiAgZm9yIChsZXQgZCA9IDE7IGQgPD0gZGF5c0luTW9udGg7IGQrKykgewogICAgY29uc3QgZGF0ZSAgID0gZHMoZCk7CiAgICBjb25zdCBkb3cgICAgPSBuZXcgRGF0ZSh2eSwgdm0sIGQpLmdldERheSgpOwogICAgY29uc3QgaXNUb2RheSAgID0gZGF0ZSA9PT0gVE9EQVk7CiAgICBjb25zdCBpc1dlZWtlbmQgPSBkb3c9PT0wfHxkb3c9PT02OwogICAgY29uc3QgZGlhICAgPSBtZFtkYXRlXT8uW1RfRElBXSAgIHx8ICcnOwogICAgY29uc3Qgbm9pdGUgPSBtZFtkYXRlXT8uW1RfTk9JVEVdIHx8ICcnOwogICAgY29uc3QgY0RpYSAgID0gZG9jQ29sb3IoZGlhKTsKICAgIGNvbnN0IGNOb2l0ZSA9IGRvY0NvbG9yKG5vaXRlKTsKCiAgICBjb25zdCBkaWFTbG90ID0gZGlhCiAgICAgID8gYDxkaXYgY2xhc3M9ImNlbGwtc2xvdCIgc3R5bGU9ImJhY2tncm91bmQ6JHtjRGlhLmJnfSI+PHNwYW4gY2xhc3M9InNsb3QtaWNvbiIgc3R5bGU9ImNvbG9yOiNiNDUzMDk7Zm9udC13ZWlnaHQ6NzAwIj5EPC9zcGFuPjxzcGFuIGNsYXNzPSJzbG90LW5hbWUiIHN0eWxlPSJjb2xvcjoke2NEaWEudHh9Ij4ke2RpYX08L3NwYW4+PC9kaXY+YAogICAgICA6IGA8ZGl2IGNsYXNzPSJjZWxsLXNsb3QiIHN0eWxlPSJiYWNrZ3JvdW5kOiNmOWZhZmIiPjxzcGFuIGNsYXNzPSJzbG90LWVtcHR5Ij7igJQgZGlhPC9zcGFuPjwvZGl2PmA7CiAgICBjb25zdCBub2l0ZVNsb3QgPSBub2l0ZQogICAgICA/IGA8ZGl2IGNsYXNzPSJjZWxsLXNsb3QiIHN0eWxlPSJiYWNrZ3JvdW5kOiR7Y05vaXRlLmJnfSI+PHNwYW4gY2xhc3M9InNsb3QtaWNvbiIgc3R5bGU9ImNvbG9yOiMzYjViZGI7Zm9udC13ZWlnaHQ6NzAwIj5OPC9zcGFuPjxzcGFuIGNsYXNzPSJzbG90LW5hbWUiIHN0eWxlPSJjb2xvcjoke2NOb2l0ZS50eH0iPiR7bm9pdGV9PC9zcGFuPjwvZGl2PmAKICAgICAgOiBgPGRpdiBjbGFzcz0iY2VsbC1zbG90IiBzdHlsZT0iYmFja2dyb3VuZDojZjVmN2ZmIj48c3BhbiBjbGFzcz0ic2xvdC1lbXB0eSI+4oCUIG5vaXRlPC9zcGFuPjwvZGl2PmA7CgogICAgY2VsbHMgKz0gYDxkaXYgY2xhc3M9ImNhbC1jZWxsJHtpc1RvZGF5PycgdG9kYXknOicnfSR7aXNXZWVrZW5kPycgd2Vla2VuZCc6Jyd9IiBvbmNsaWNrPSJvcGVuTW9kYWwoJyR7ZGF0ZX0nKSI+CiAgICAgIDxkaXYgY2xhc3M9ImNhbC1kYXktbnVtIj4ke2R9PC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImNlbGwtc2xvdHMiPiR7ZGlhU2xvdH0ke25vaXRlU2xvdH08L2Rpdj4KICAgIDwvZGl2PmA7CiAgfQoKICAvLyBOZXh0IG1vbnRoIHBhZGRpbmcKICBjb25zdCB0b3RhbCA9IE1hdGguY2VpbCgoZmlyc3REYXkrZGF5c0luTW9udGgpLzcpKjc7CiAgZm9yIChsZXQgZCA9IDE7IGQgPD0gdG90YWwtZmlyc3REYXktZGF5c0luTW9udGg7IGQrKykKICAgIGNlbGxzICs9IGA8ZGl2IGNsYXNzPSJjYWwtY2VsbCBvdGhlci1tb250aCI+PGRpdiBjbGFzcz0iY2FsLWRheS1udW0iPiR7ZH08L2Rpdj48L2Rpdj5gOwoKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY2FsLWJvZHknKS5pbm5lckhUTUwgPSBjZWxsczsKfQoKCgovLyDilIDilIAgTElTVCDilIDilIAKZnVuY3Rpb24gcmVuZGVyTGlzdCgpIHsKICBjb25zdCBtZCA9IG1vbnRoRGF0YSgpOwogIGNvbnN0IGRheXNJbk1vbnRoID0gbmV3IERhdGUodnksIHZtKzEsIDApLmdldERhdGUoKTsKICBjb25zdCBmaXJzdERvdyAgICA9IChuZXcgRGF0ZSh2eSwgdm0sIDEpLmdldERheSgpICsgNikgJSA3OyAvLyBNb249MAogIGxldCBodG1sID0gJycsIHdlZWtIdG1sID0gJycsIHdlZWtOdW0gPSAwOwoKICBmb3IgKGxldCBkID0gMTsgZCA8PSBkYXlzSW5Nb250aDsgZCsrKSB7CiAgICBjb25zdCBkYXRlID0gZHMoZCk7CiAgICBjb25zdCBkb3cgID0gbmV3IERhdGUodnksIHZtLCBkKS5nZXREYXkoKTsKICAgIGNvbnN0IGlzVG9kYXkgPSBkYXRlID09PSBUT0RBWTsKICAgIGNvbnN0IG5ld1dlZWsgPSBNYXRoLmZsb29yKChkICsgZmlyc3REb3cgLSAxKSAvIDcpOwoKICAgIGlmIChuZXdXZWVrID4gd2Vla051bSkgewogICAgICB3ZWVrTnVtID0gbmV3V2VlazsKICAgICAgaWYgKHdlZWtIdG1sKSBodG1sICs9IHdlZWtIdG1sICsgJzwvZGl2Pic7CiAgICAgIGh0bWwgKz0gYDxkaXYgY2xhc3M9Imxpc3Qtd2VlayI+PGRpdiBjbGFzcz0id2Vlay1sYWJlbCI+U2VtYW5hICR7d2Vla051bX08L2Rpdj5gOwogICAgICB3ZWVrSHRtbCA9ICcnOwogICAgfQoKICAgIGNvbnN0IGRpYSAgID0gbWRbZGF0ZV0/LltUX0RJQV0gICB8fCAnJzsKICAgIGNvbnN0IG5vaXRlID0gbWRbZGF0ZV0/LltUX05PSVRFXSB8fCAnJzsKICAgIGNvbnN0IGNEaWEgICA9IGRvY0NvbG9yKGRpYSk7CiAgICBjb25zdCBjTm9pdGUgPSBkb2NDb2xvcihub2l0ZSk7CgogICAgY29uc3QgZGlhU2xvdEJnICAgPSBkaWEgICA/IGNEaWEuYmcgICA6ICd2YXIoLS13aGl0ZSknOwogICAgY29uc3Qgbm9pdGVTbG90QmcgPSBub2l0ZSA/IGNOb2l0ZS5iZyA6ICd2YXIoLS13aGl0ZSknOwogICAgd2Vla0h0bWwgKz0gYDxkaXYgY2xhc3M9Imxpc3Qtcm93JHtpc1RvZGF5PycgdG9kYXktcm93JzonJ30iIG9uY2xpY2s9Im9wZW5Nb2RhbCgnJHtkYXRlfScpIj4KICAgICAgPGRpdiBjbGFzcz0ibGlzdC1kYXRlIj4KICAgICAgICA8ZGl2IGNsYXNzPSJsaXN0LWRhdGUtbnVtIj4ke2R9PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0ibGlzdC1kYXRlLWRheSI+JHtEQVlTX1NIT1JUW2Rvd119PC9kaXY+CiAgICAgIDwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJsaXN0LXNsb3QiIHN0eWxlPSJiYWNrZ3JvdW5kOiR7ZGlhU2xvdEJnfSI+CiAgICAgICAgPGRpdiBjbGFzcz0ic2xvdC1sYWJlbCBkaWEiPuKYgCA3aOKAkzE5aDwvZGl2PgogICAgICAgICR7ZGlhCiAgICAgICAgICA/IGA8c3BhbiBjbGFzcz0ic2xvdC1kb2MiIHN0eWxlPSJjb2xvcjoke2NEaWEudHh9Ij4ke2RpYX08L3NwYW4+YAogICAgICAgICAgOiBgPGRpdiBjbGFzcz0ic2xvdC1lbXB0eSI+4oCUPC9kaXY+YH0KICAgICAgPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9Imxpc3Qtc2xvdCIgc3R5bGU9ImJhY2tncm91bmQ6JHtub2l0ZVNsb3RCZ30iPgogICAgICAgIDxkaXYgY2xhc3M9InNsb3QtbGFiZWwgbm9pdGUiPvCfjJkgMTlo4oCTN2g8L2Rpdj4KICAgICAgICAke25vaXRlCiAgICAgICAgICA/IGA8c3BhbiBjbGFzcz0ic2xvdC1kb2MiIHN0eWxlPSJjb2xvcjoke2NOb2l0ZS50eH0iPiR7bm9pdGV9PC9zcGFuPmAKICAgICAgICAgIDogYDxkaXYgY2xhc3M9InNsb3QtZW1wdHkiPuKAlDwvZGl2PmB9CiAgICAgIDwvZGl2PgogICAgPC9kaXY+YDsKICB9CiAgaWYgKHdlZWtIdG1sKSBodG1sICs9IHdlZWtIdG1sICsgJzwvZGl2Pic7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2xpc3QtYm9keScpLmlubmVySFRNTCA9IGh0bWwgfHwgJzxkaXYgc3R5bGU9InBhZGRpbmc6MzJweDt0ZXh0LWFsaWduOmNlbnRlcjtjb2xvcjp2YXIoLS1ncmF5LTQwMCkiPlNlbSBkYWRvcyBuZXN0ZSBtw6pzPC9kaXY+JzsKfQoKZnVuY3Rpb24gdG9hc3QobXNnKSB7CiAgY29uc3QgdCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCd0b2FzdCcpOwogIHQudGV4dENvbnRlbnQgPSBtc2c7IHQuY2xhc3NMaXN0LmFkZCgnc2hvdycpOwogIHNldFRpbWVvdXQoKCkgPT4gdC5jbGFzc0xpc3QucmVtb3ZlKCdzaG93JyksIDIwMDApOwp9Cgpkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCdrZXlkb3duJywgZSA9PiB7CiAgaWYgKGUua2V5PT09J0VzY2FwZScpIGNsb3NlTW9kYWwoKTsKICBpZiAoZS5rZXk9PT0nRW50ZXInICYmIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdvdmVybGF5JykuY2xhc3NMaXN0LmNvbnRhaW5zKCdvcGVuJykgJiYgZS50YXJnZXQudGFnTmFtZT09PSdJTlBVVCcpIHNhdmVFbnRyeSgpOwp9KTsKCndhcm1Db2xvcnMobG9hZCgpKTsKcmVuZGVyKCk7CmRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdsYXN0LXVwZGF0ZWQnKS50ZXh0Q29udGVudCA9ICdEYWRvcyBkZSAnICsgbmV3IERhdGUoKS50b0xvY2FsZURhdGVTdHJpbmcoJ3B0LUJSJyk7Cjwvc2NyaXB0Pgo8L2JvZHk+CjwvaHRtbD4K";
+  var template = decodeURIComponent(escape(atob(b64)));
+  var data = load(); // localStorage or SEED
+  var dataJson = JSON.stringify(data);
+  var html = template.replace('/*||SEED||*/', dataJson);
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([html], {type:'text/html;charset=utf-8'}));
+  a.download = 'escala_uti_compartilhar.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Arquivo gerado! Salve na pasta OneDrive/Escalas.');
+}
+
+warmColors(load());
+render();
+</script>
+</body>
+</html>
