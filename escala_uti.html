@@ -612,7 +612,7 @@ function exportViewer() {
   var html = template.replace('/*||SEED||*/', dataJson);
   var a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([html], {type:'text/html;charset=utf-8'}));
-  a.download = 'escala_uti_compartilhar.html';
+  a.download = 'viewer_uti.html';
   a.click();
   URL.revokeObjectURL(a.href);
   toast('Arquivo gerado! Salve na pasta OneDrive/Escalas.');
