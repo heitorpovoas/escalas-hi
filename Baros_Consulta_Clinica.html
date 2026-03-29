@@ -1416,80 +1416,97 @@ async function toggleRecording() {
   }
 }
 
-async function startRecording() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioChunks = [];
-    // Prefer webm/opus (Chrome/Android) or mp4 (Safari/iPhone)
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : MediaRecorder.isTypeSupported('audio/mp4')
-      ? 'audio/mp4'
-      : 'audio/ogg';
+// Speech recognition instance
+let recognition = null;
+let fullTranscript = '';
 
-    mediaRecorder = new MediaRecorder(stream, { mimeType });
-    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-    mediaRecorder.onstop = () => processAudio(new Blob(audioChunks, { type: mimeType }));
-    mediaRecorder.start(1000);
-
-    // UI
-    const btn = document.getElementById('rec-btn');
-    btn.classList.add('recording');
-    document.getElementById('rec-label').textContent = 'Parar gravação';
-    document.getElementById('rec-timer').style.display = 'inline';
-    recSeconds = 0;
-    recInterval = setInterval(() => {
-      recSeconds++;
-      const m = String(Math.floor(recSeconds/60)).padStart(2,'0');
-      const s = String(recSeconds%60).padStart(2,'0');
-      document.getElementById('rec-timer').textContent = `${m}:${s}`;
-    }, 1000);
-    setStatus('🔴 Gravando... fale normalmente durante a consulta');
-  } catch (err) {
-    setStatus('⚠ Permissão de microfone negada. Verifique as configurações do browser.');
+function startRecording() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    setStatus('⚠ Seu browser não suporta reconhecimento de voz. Use Chrome ou Safari recente.');
+    return;
   }
+
+  fullTranscript = '';
+  recognition = new SpeechRecognition();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) fullTranscript += t + ' ';
+      else interim = t;
+    }
+    setStatus(`🔴 Gravando... "${(fullTranscript + interim).slice(-60)}"`);
+  };
+
+  recognition.onerror = (e) => {
+    setStatus(`⚠ Erro de microfone: ${e.error}. Verifique as permissões.`);
+    stopRecording();
+  };
+
+  recognition.onend = () => {
+    if (fullTranscript.trim().length > 10) {
+      extractClinicalInfo(fullTranscript.trim());
+    }
+  };
+
+  recognition.start();
+
+  // UI
+  const btn = document.getElementById('rec-btn');
+  btn.classList.add('recording');
+  document.getElementById('rec-label').textContent = 'Parar gravação';
+  document.getElementById('rec-timer').style.display = 'inline';
+  recSeconds = 0;
+  recInterval = setInterval(() => {
+    recSeconds++;
+    const m = String(Math.floor(recSeconds/60)).padStart(2,'0');
+    const s = String(recSeconds%60).padStart(2,'0');
+    document.getElementById('rec-timer').textContent = `${m}:${s}`;
+  }, 1000);
+  setStatus('🔴 Gravando... fale normalmente durante a consulta');
 }
 
 function stopRecording() {
-  if (mediaRecorder) {
-    mediaRecorder.stop();
-    mediaRecorder.stream.getTracks().forEach(t => t.stop());
-    mediaRecorder = null;
-  }
+  if (recognition) { recognition.stop(); recognition = null; }
   clearInterval(recInterval);
   const btn = document.getElementById('rec-btn');
   btn.classList.remove('recording');
   document.getElementById('rec-label').textContent = 'Gravar consulta';
   document.getElementById('rec-timer').style.display = 'none';
-  setStatus('⏳ Processando áudio...', true);
+  if (fullTranscript.trim().length > 10) {
+    setStatus('⏳ Processando transcrição...', true);
+  } else {
+    setStatus('⚠ Nenhum texto detectado. Tente falar mais alto ou verifique o microfone.');
+  }
 }
 
-// ── FILE UPLOAD ────────────────────────────────────────────────────────────
+// ── FILE UPLOAD — convert to text via Claude proxy ─────────────────────────
 function handleAudioUpload(input) {
   const file = input.files[0];
   if (!file) return;
-  setStatus(`📂 Processando: ${file.name}`, true);
-  processAudio(file);
+  setStatus(`📂 Transcrevendo ${file.name} via IA...`, true);
+  transcribeWithProxy(file);
   input.value = '';
 }
 
-// ── SEND TO CLAUDE API ─────────────────────────────────────────────────────
-async function processAudio(audioBlob) {
-  setStatus('🔄 Transcrevendo com IA...', true);
-  document.getElementById('ai-preview').classList.remove('show');
-  document.getElementById('ai-actions').classList.remove('show');
-
+async function transcribeWithProxy(file) {
   try {
-    // Convert blob to base64
-    const base64 = await blobToBase64(audioBlob);
-    const mediaType = audioBlob.type || 'audio/webm';
+    // Convert to base64
+    const base64 = await blobToBase64(file);
+    const mimeType = file.type || 'audio/m4a';
 
-    // Step 1: Transcribe
-    const transcriptRes = await fetch('https://lively-surf-82e9.heitorpovoas.workers.dev', {
+    setStatus('🔄 Enviando áudio para transcrição...', true);
+
+    // Use proxy to transcribe via Claude
+    const res = await fetch('https://lively-surf-82e9.heitorpovoas.workers.dev', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -1497,46 +1514,59 @@ async function processAudio(audioBlob) {
           role: 'user',
           content: [
             {
-              type: 'document',
-              source: { type: 'base64', media_type: mediaType, data: base64 }
-            },
-            {
               type: 'text',
-              text: 'Transcreva este áudio de consulta médica em português brasileiro, palavra por palavra. Retorne apenas a transcrição, sem comentários.'
+              text: `Este é um arquivo de áudio de uma consulta médica em português. 
+Por favor, transcreva o conteúdo de forma mais fiel possível. 
+Se não conseguir transcrever o áudio diretamente, analise o arquivo e extraia qualquer informação clínica disponível.
+Retorne APENAS a transcrição, sem comentários adicionais.
+
+Se o formato não for suportado, responda exatamente: FORMATO_NAO_SUPORTADO`
             }
           ]
         }]
       })
     });
 
-    const transcriptData = await transcriptRes.json();
-    const transcript = transcriptData.content?.[0]?.text || '';
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
 
-    if (!transcript) {
-      // Fallback if audio document not supported — use text prompt workaround
-      setStatus('⚠ Formato de áudio não suportado diretamente. Tente mp3 ou m4a.');
+    if (text === 'FORMATO_NAO_SUPORTADO' || text.includes('FORMATO_NAO_SUPORTADO')) {
+      setStatus('⚠ Formato não suportado. Use a gravação direta pelo botão "Gravar consulta", ou converta o áudio para mp3 e tente novamente.');
       return;
     }
 
-    setStatus('🧠 Extraindo informações clínicas...', true);
+    if (text.length > 20) {
+      fullTranscript = text;
+      extractClinicalInfo(text);
+    } else {
+      setStatus('⚠ Não foi possível transcrever. Use a gravação direta clicando em "Gravar consulta".');
+    }
+  } catch(err) {
+    setStatus('⚠ Erro na transcrição. Use a gravação direta clicando em "Gravar consulta".');
+  }
+}
 
-    // Step 2: Extract clinical fields from transcript
-    const extractRes = await fetch('https://lively-surf-82e9.heitorpovoas.workers.dev', {
+// ── EXTRACT CLINICAL INFO FROM TRANSCRIPT ─────────────────────────────────
+async function extractClinicalInfo(transcript) {
+  setStatus('🧠 Extraindo informações clínicas...', true);
+  document.getElementById('ai-preview').classList.remove('show');
+  document.getElementById('ai-actions').classList.remove('show');
+
+  try {
+    const res = await fetch('https://lively-surf-82e9.heitorpovoas.workers.dev', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
         messages: [{
           role: 'user',
-          content: `Você é um assistente médico especializado em Cirurgia Metabólica, Emagrecimento e Saúde Masculina. Analise esta transcrição de consulta e extraia as informações clínicas no formato JSON abaixo. Responda APENAS com o JSON válido, sem markdown ou explicações.
+          content: `Você é um assistente médico especializado em Cirurgia Metabólica, Emagrecimento e Saúde Masculina. Analise esta transcrição de consulta médica em português e extraia as informações clínicas. Responda APENAS com JSON válido, sem markdown.
 
 TRANSCRIÇÃO:
 ${transcript}
 
-Retorne EXATAMENTE neste formato JSON:
+Formato JSON exato:
 {
   "queixa": "queixa principal em uma linha",
   "hda": "história da doença atual completa",
@@ -1544,39 +1574,37 @@ Retorne EXATAMENTE neste formato JSON:
   "meds": "medicações em uso mencionadas",
   "efAchados": "achados do exame físico mencionados",
   "conduta": "conduta e plano terapêutico mencionados",
-  "encaminhamentos": ["especialidade1", "especialidade2"],
-  "exams": ["exame1", "exame2"],
-  "transcript_preview": "primeiras 200 caracteres da transcrição"
+  "encaminhamentos": ["especialidade1"],
+  "exams": ["exame1"],
+  "transcript_preview": "${transcript.substring(0,150).replace(/"/g,"'")}"
 }`
         }]
       })
     });
 
-    const extractData = await extractRes.json();
-    const raw = extractData.content?.[0]?.text || '{}';
-
-    // Parse JSON (strip any accidental markdown)
-    const clean = raw.replace(/```json|```/g, '').trim();
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '{}';
+    const clean = raw.replace(/```json|```/g,'').trim();
     lastTranscript = JSON.parse(clean);
 
     // Show preview
     const preview = document.getElementById('ai-preview');
     preview.innerHTML = `
-      <div style="font-size:11px;opacity:.6;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Prévia da transcrição</div>
-      <div style="margin-bottom:10px;font-style:italic">"${lastTranscript.transcript_preview || transcript.substring(0,200)}..."</div>
+      <div style="font-size:11px;opacity:.6;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Transcrição detectada</div>
+      <div style="margin-bottom:10px;font-style:italic;font-size:12px">"${lastTranscript.transcript_preview}..."</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
-        ${lastTranscript.queixa   ? `<div><strong>Queixa:</strong> ${lastTranscript.queixa.substring(0,80)}</div>` : ''}
-        ${lastTranscript.conduta  ? `<div><strong>Conduta:</strong> ${lastTranscript.conduta.substring(0,80)}</div>` : ''}
+        ${lastTranscript.queixa  ? `<div><strong>Queixa:</strong> ${lastTranscript.queixa.substring(0,80)}</div>` : ''}
+        ${lastTranscript.conduta ? `<div><strong>Conduta:</strong> ${lastTranscript.conduta.substring(0,80)}</div>` : ''}
         ${lastTranscript.exams?.length ? `<div><strong>Exames:</strong> ${lastTranscript.exams.slice(0,3).join(', ')}</div>` : ''}
         ${lastTranscript.encaminhamentos?.length ? `<div><strong>Encaminhamentos:</strong> ${lastTranscript.encaminhamentos.join(', ')}</div>` : ''}
       </div>`;
     preview.classList.add('show');
     document.getElementById('ai-actions').classList.add('show');
-    setStatus('✅ Pronto! Revise e clique em "Aplicar ao formulário"');
+    setStatus('✅ Pronto! Clique em "Aplicar ao formulário"');
 
-  } catch (err) {
+  } catch(err) {
     console.error(err);
-    setStatus('⚠ Erro ao processar. Verifique a conexão e tente novamente.');
+    setStatus('⚠ Erro ao extrair dados. Verifique a conexão.');
   }
 }
 
