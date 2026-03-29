@@ -1417,8 +1417,10 @@ async function toggleRecording() {
 }
 
 // Speech recognition instance
-let recognition = null;
+let recognition    = null;
 let fullTranscript = '';
+let isRecording    = false;
+let restartTimer   = null;
 
 function startRecording() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1428,34 +1430,47 @@ function startRecording() {
   }
 
   fullTranscript = '';
-  recognition = new SpeechRecognition();
-  recognition.lang = 'pt-BR';
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
+  isRecording    = true;
 
-  recognition.onresult = (event) => {
-    let interim = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const t = event.results[i][0].transcript;
-      if (event.results[i].isFinal) fullTranscript += t + ' ';
-      else interim = t;
+  function createAndStart() {
+    if (!isRecording) return;
+
+    recognition = new SpeechRecognition();
+    recognition.lang            = 'pt-BR';
+    recognition.continuous      = false;   // Safari: false works better
+    recognition.interimResults  = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          fullTranscript += event.results[i][0].transcript + ' ';
+          setStatus(`🔴 Gravando... "${fullTranscript.slice(-80)}"`);
+        }
+      }
+    };
+
+    recognition.onerror = (e) => {
+      if (e.error === 'no-speech' || e.error === 'aborted') {
+        // Normal — restart silently
+        if (isRecording) restartTimer = setTimeout(createAndStart, 200);
+      } else {
+        setStatus(`⚠ Erro: ${e.error}. Verifique as permissões do microfone.`);
+        stopRecording();
+      }
+    };
+
+    recognition.onend = () => {
+      // Auto-restart to keep recording continuously
+      if (isRecording) restartTimer = setTimeout(createAndStart, 200);
+    };
+
+    try { recognition.start(); } catch(e) {
+      if (isRecording) restartTimer = setTimeout(createAndStart, 500);
     }
-    setStatus(`🔴 Gravando... "${(fullTranscript + interim).slice(-60)}"`);
-  };
+  }
 
-  recognition.onerror = (e) => {
-    setStatus(`⚠ Erro de microfone: ${e.error}. Verifique as permissões.`);
-    stopRecording();
-  };
-
-  recognition.onend = () => {
-    if (fullTranscript.trim().length > 10) {
-      extractClinicalInfo(fullTranscript.trim());
-    }
-  };
-
-  recognition.start();
+  createAndStart();
 
   // UI
   const btn = document.getElementById('rec-btn');
@@ -1473,16 +1488,24 @@ function startRecording() {
 }
 
 function stopRecording() {
-  if (recognition) { recognition.stop(); recognition = null; }
+  isRecording = false;
+  clearTimeout(restartTimer);
+  if (recognition) {
+    try { recognition.abort(); } catch(e) {}
+    recognition = null;
+  }
   clearInterval(recInterval);
   const btn = document.getElementById('rec-btn');
   btn.classList.remove('recording');
   document.getElementById('rec-label').textContent = 'Gravar consulta';
   document.getElementById('rec-timer').style.display = 'none';
-  if (fullTranscript.trim().length > 10) {
-    setStatus('⏳ Processando transcrição...', true);
+
+  const text = fullTranscript.trim();
+  if (text.length > 10) {
+    setStatus('⏳ Extraindo informações clínicas...', true);
+    extractClinicalInfo(text);
   } else {
-    setStatus('⚠ Nenhum texto detectado. Tente falar mais alto ou verifique o microfone.');
+    setStatus('⚠ Nenhum áudio capturado. No Safari: Configurações → Safari → Microfone → Permitir. No iPhone via GitHub Pages funciona melhor.');
   }
 }
 
