@@ -342,6 +342,25 @@ body{font-family:'Geist',sans-serif;background:var(--cream);color:var(--ink);min
   min-height:18px;transition:all .3s;
   display:flex;align-items:center;gap:8px;
 }
+.apikey-bar{
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);
+  border-radius:var(--rs);padding:10px 14px;margin-bottom:14px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.apikey-bar input{
+  flex:1;min-width:200px;background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.25);border-radius:6px;
+  padding:7px 12px;font-size:13px;color:var(--white);font-family:'Geist',sans-serif;
+  outline:none;
+}
+.apikey-bar input::placeholder{color:rgba(255,255,255,0.4)}
+.apikey-bar input:focus{border-color:rgba(255,255,255,0.6)}
+.apikey-save{
+  padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;
+  background:var(--teal);color:var(--white);border:none;cursor:pointer;
+  font-family:'Geist',sans-serif;white-space:nowrap;
+}
+.apikey-ok{font-size:11px;opacity:.7;display:flex;align-items:center;gap:5px}
 .ai-spinner{
   width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);
   border-top-color:var(--white);border-radius:50%;
@@ -563,6 +582,11 @@ body{font-family:'Geist',sans-serif;background:var(--cream);color:var(--ink);min
           Transcrição com IA
         </div>
         <div class="ai-widget-sub">Grave a consulta ou envie um áudio — Claude extrai a anamnese automaticamente em português</div>
+        <div class="apikey-bar" id="apikey-bar">
+          <input type="password" id="apikey-input" placeholder="Cole sua Anthropic API key (sk-ant-...)" autocomplete="off">
+          <button class="apikey-save" onclick="saveApiKey()">Salvar</button>
+          <span class="apikey-ok" id="apikey-ok" style="display:none">🔑 API key salva</span>
+        </div>
         <div class="ai-controls">
           <button class="btn-record" id="rec-btn" onclick="toggleRecording()">
             <span class="rec-dot"></span>
@@ -1003,6 +1027,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updatePatientSuggestions();
   renderDashboard();
+  initApiKeyBar();
 });
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1387,6 +1412,50 @@ function updatePatientSuggestions() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// API KEY MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════════
+function getApiKey() {
+  return localStorage.getItem('baros_api_key') || '';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apikey-input').value.trim();
+  if (!key.startsWith('sk-')) {
+    alert('API key inválida. Deve começar com "sk-ant-..."');
+    return;
+  }
+  localStorage.setItem('baros_api_key', key);
+  document.getElementById('apikey-input').value = '';
+  document.getElementById('apikey-ok').style.display = 'flex';
+  document.getElementById('apikey-bar').style.background = 'rgba(42,180,170,0.15)';
+  document.getElementById('apikey-bar').style.borderColor = 'rgba(42,180,170,0.4)';
+  setTimeout(() => {
+    document.getElementById('apikey-bar').innerHTML =
+      '<span class="apikey-ok" style="display:flex">🔑 API key configurada e salva neste browser</span>' +
+      '<button class="apikey-save" style="background:rgba(255,255,255,0.15)" onclick="clearApiKey()">Alterar</button>';
+  }, 800);
+}
+
+function clearApiKey() {
+  localStorage.removeItem('baros_api_key');
+  document.getElementById('apikey-bar').innerHTML = `
+    <input type="password" id="apikey-input" placeholder="Cole sua Anthropic API key (sk-ant-...)" autocomplete="off">
+    <button class="apikey-save" onclick="saveApiKey()">Salvar</button>
+    <span class="apikey-ok" id="apikey-ok" style="display:none">🔑 API key salva</span>`;
+}
+
+function initApiKeyBar() {
+  const key = getApiKey();
+  if (key) {
+    document.getElementById('apikey-bar').innerHTML =
+      '<span class="apikey-ok" style="display:flex">🔑 API key configurada e salva neste browser</span>' +
+      '<button class="apikey-save" style="background:rgba(255,255,255,0.15)" onclick="clearApiKey()">Alterar</button>';
+    document.getElementById('apikey-bar').style.background = 'rgba(42,180,170,0.15)';
+    document.getElementById('apikey-bar').style.borderColor = 'rgba(42,180,170,0.4)';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // AI TRANSCRIPTION ENGINE
 // ══════════════════════════════════════════════════════════════════════════
 let mediaRecorder = null;
@@ -1470,6 +1539,10 @@ function handleAudioUpload(input) {
 
 // ── SEND TO CLAUDE API ─────────────────────────────────────────────────────
 async function processAudio(audioBlob) {
+  if (!getApiKey()) {
+    setStatus('⚠ Configure sua API key da Anthropic no campo acima antes de transcrever.');
+    return;
+  }
   setStatus('🔄 Transcrevendo com IA...', true);
   document.getElementById('ai-preview').classList.remove('show');
   document.getElementById('ai-actions').classList.remove('show');
@@ -1482,7 +1555,12 @@ async function processAudio(audioBlob) {
     // Step 1: Transcribe
     const transcriptRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': getApiKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-request-origin': 'https://heitorpovoas.github.io',
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -1516,7 +1594,12 @@ async function processAudio(audioBlob) {
     // Step 2: Extract clinical fields from transcript
     const extractRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': getApiKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-request-origin': 'https://heitorpovoas.github.io',
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
