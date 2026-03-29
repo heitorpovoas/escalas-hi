@@ -581,12 +581,8 @@ body{font-family:'Geist',sans-serif;background:var(--cream);color:var(--ink);min
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
           Transcrição com IA
         </div>
-        <div class="ai-widget-sub">Grave a consulta ou envie um áudio — Claude extrai a anamnese automaticamente em português</div>
-        <div class="apikey-bar" id="apikey-bar">
-          <input type="password" id="apikey-input" placeholder="Cole sua Anthropic API key (sk-ant-...)" autocomplete="off">
-          <button class="apikey-save" onclick="saveApiKey()">Salvar</button>
-          <span class="apikey-ok" id="apikey-ok" style="display:none">🔑 API key salva</span>
-        </div>
+        <div class="ai-widget-sub">Grave a consulta ou envie um áudio — Claude transcreve e preenche a anamnese automaticamente</div>
+
         <div class="ai-controls">
           <button class="btn-record" id="rec-btn" onclick="toggleRecording()">
             <span class="rec-dot"></span>
@@ -1553,13 +1549,10 @@ async function processAudio(audioBlob) {
     const mediaType = audioBlob.type || 'audio/webm';
 
     // Step 1: Transcribe
-    const transcriptRes = await fetch('https://api.anthropic.com/v1/messages', {
+    const transcriptRes = await fetch('https://lively-surf-82e9.heitorpovoas.workers.dev', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': getApiKey(),
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-request-origin': 'https://heitorpovoas.github.io',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -1592,13 +1585,10 @@ async function processAudio(audioBlob) {
     setStatus('🧠 Extraindo informações clínicas...', true);
 
     // Step 2: Extract clinical fields from transcript
-    const extractRes = await fetch('https://api.anthropic.com/v1/messages', {
+    const extractRes = await fetch('https://lively-surf-82e9.heitorpovoas.workers.dev', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': getApiKey(),
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-request-origin': 'https://heitorpovoas.github.io',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
