@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Avaliação DAEM — Clínica Baros</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -367,6 +368,11 @@ header p {
   background: var(--green); color: var(--white);
 }
 .btn-success:hover { background: #256944; transform: translateY(-1px); }
+.btn-whatsapp {
+  background: #25D366; color: var(--white);
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-whatsapp:hover { background: #1ebe57; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,211,102,0.35); }
 
 /* ── RESULTS PAGE ─────────────────────────────────────────────────────── */
 .result-hero {
@@ -682,8 +688,14 @@ header p {
   </div>
 
   <div class="action-row">
+    <button class="btn btn-whatsapp" onclick="generatePDFandWhatsApp(this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+      </svg>
+      PDF + WhatsApp
+    </button>
     <button class="btn btn-secondary" onclick="window.print()">🖨 Imprimir</button>
-    <button class="btn btn-secondary" onclick="copySummary()">📋 Copiar resumo</button>
+    <button class="btn btn-secondary" onclick="copySummary()">📋 Copiar</button>
     <button class="btn btn-primary" onclick="goStep(0);resetAll()">↺ Refazer</button>
   </div>
 
@@ -1062,6 +1074,361 @@ function buildPrintSummary(somatico, sexual, psico, total, adamPos, adamSIM) {
 // ══════════════════════════════════════════════════════════════════════════
 // COPY SUMMARY
 // ══════════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════════
+// PDF GENERATION + WHATSAPP
+// ══════════════════════════════════════════════════════════════════════════
+async function generatePDFandWhatsApp(btn) {
+  const origText = btn.innerHTML;
+  btn.innerHTML = '⏳ Gerando PDF...';
+  btn.disabled = true;
+
+  try {
+    await buildPDF();
+  } catch(e) {
+    console.error('PDF error:', e);
+  }
+
+  btn.innerHTML = origText;
+  btn.disabled = false;
+
+  // Open WhatsApp after a small delay so PDF download starts first
+  setTimeout(() => sendWhatsApp(), 600);
+}
+
+function buildPDF() {
+  return new Promise((resolve) => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const name    = document.getElementById('f-name').value   || '—';
+    const dob     = document.getElementById('f-dob').value    || '—';
+    const weight  = document.getElementById('f-weight').value || '—';
+    const height  = document.getElementById('f-height').value || '—';
+    const dateVal = document.getElementById('f-date').value   || new Date().toLocaleDateString('pt-BR');
+
+    // AMS scoring
+    let somatico = 0, sexual = 0, psico = 0;
+    AMS_Q.forEach(q => {
+      const v = amsAnswers[q.n];
+      if (!v || v === 'NA') return;
+      if (q.d === 'P')  somatico += v;
+      if (q.d === 'S')  sexual   += v;
+      if (q.d === 'PS') psico    += v;
+    });
+    const amsTotal = somatico + sexual + psico;
+    const adamSIM  = Object.values(adamAnswers).filter(v => v === 'SIM').length;
+    const adamPos  = adamAnswers[1]==='SIM' || adamAnswers[7]==='SIM' || adamSIM >= 3;
+
+    let verdict;
+    if      (amsTotal < 27) verdict = 'Sem deficit significativo';
+    else if (amsTotal < 37) verdict = 'Sintomas Leves';
+    else if (amsTotal < 50) verdict = 'Sintomas Moderados';
+    else                    verdict = 'Sintomas Graves';
+
+    const W = 210, M = 14;
+    let y = 0;
+
+    // ── HEADER BAND ────────────────────────────────────────────────────
+    doc.setFillColor(27, 58, 107);
+    doc.rect(0, 0, W, 28, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15); doc.setTextColor(255, 255, 255);
+    doc.text('Avaliacao DAEM', M, 11);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8); doc.setTextColor(180, 200, 240);
+    doc.text('Deficiencia Androgênica do Envelhecimento Masculino  |  AMS + ADAM + Escalas', M, 17);
+    doc.setFontSize(8); doc.setTextColor(140, 170, 220);
+    doc.text('Dr. Heitor Portella Povoas Filho  —  CRM 11.157  |  Cirurgia Metabolica · Emagrecimento · Saude Masculina', M, 23);
+    y = 35;
+
+    // ── PATIENT DATA ───────────────────────────────────────────────────
+    doc.setFillColor(214, 228, 247);
+    doc.roundedRect(M, y, W - 2*M, 24, 3, 3, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(27, 58, 107);
+    doc.text('DADOS DO PACIENTE', M+4, y+6);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(40, 40, 60);
+    doc.text(`Paciente: ${name}`, M+4, y+13);
+    doc.text(`DN: ${dob}   |   Peso: ${weight} kg   |   Altura: ${height} cm   |   Data: ${dateVal}`, M+4, y+20);
+    y += 30;
+
+    // ── AMS RESULT BANNER ──────────────────────────────────────────────
+    const verdictColor = amsTotal < 27 ? [46,125,82] : amsTotal < 37 ? [176,122,0] : amsTotal < 50 ? [201,107,0] : [192,32,32];
+    doc.setFillColor(...verdictColor);
+    doc.roundedRect(M, y, W - 2*M, 20, 3, 3, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(255,255,255);
+    doc.text(String(amsTotal), M+6, y+14);
+    doc.setFontSize(10);
+    doc.text('Pontuacao Total AMS', M+22, y+9);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.text(verdict, M+22, y+16);
+    // Domain subtotals on right
+    doc.setFontSize(8);
+    doc.text(`Somatico: ${somatico}  |  Sexual: ${sexual}  |  Psicologico: ${psico}`, W-M-2, y+9, {align:'right'});
+    // Severity bar
+    doc.setFillColor(255,255,255,60);
+    doc.rect(M+80, y+13, W-2*M-84, 3, 'F');
+    const needleX = M+80 + Math.min(1, Math.max(0,(amsTotal-17)/(85-17))) * (W-2*M-84);
+    doc.setFillColor(255,255,255);
+    doc.circle(needleX, y+14.5, 2.5, 'F');
+    y += 27;
+
+    // ── ADAM RESULT ────────────────────────────────────────────────────
+    const adamFill = adamPos ? [255,235,238] : [232,245,233];
+    const adamText = adamPos ? [192,32,32] : [46,125,82];
+    doc.setFillColor(...adamFill);
+    doc.roundedRect(M, y, W - 2*M, 14, 3, 3, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...adamText);
+    doc.text(`ADAM: ${adamPos ? 'POSITIVO' : 'NEGATIVO'}  (${adamSIM} respostas SIM)`, M+4, y+6);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+    const adamCriteria = adamPos
+      ? `Criterio: ${adamAnswers[1]==='SIM'?'Q1 libido=SIM ':' '}${adamAnswers[7]==='SIM'?'Q7 erecao=SIM ':' '}${adamSIM>=3?`${adamSIM} SIM`:''}`
+      : `Nao atingiu criterio diagnostico (necessario: Q1=SIM, Q7=SIM ou 3+ SIM)`;
+    doc.text(adamCriteria, M+4, y+12);
+    y += 20;
+
+    // ── AMS DETAIL TABLE ───────────────────────────────────────────────
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(27,58,107);
+    doc.text('RESPOSTAS AMS — ESCALA DE SINTOMAS', M, y+5);
+    y += 8;
+
+    const domColors = { P:[232,244,253], S:[243,240,255], PS:[255,248,232] };
+    const colW = [8, 95, 22, 22, 8]; // num, text, domain, score spacer
+    const tableW = W - 2*M;
+
+    // header row
+    doc.setFillColor(31,92,153);
+    doc.rect(M, y, tableW, 7, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(255,255,255);
+    doc.text('#',   M+2, y+5);
+    doc.text('Sintoma', M+10, y+5);
+    doc.text('Dominio', M+107, y+5);
+    doc.text('Score', M+133, y+5);
+    y += 7;
+
+    const domainLabels = { P:'Somatico', S:'Sexual', PS:'Psicologico' };
+    AMS_Q.forEach((q, i) => {
+      const v = amsAnswers[q.n];
+      const rowH = 7;
+      const bg = i%2===0 ? [248,250,255] : [255,255,255];
+      doc.setFillColor(...bg);
+      doc.rect(M, y, tableW, rowH, 'F');
+
+      // domain accent strip
+      const dc = domColors[q.d] || [245,245,245];
+      doc.setFillColor(...dc);
+      doc.rect(M+105, y, 28, rowH, 'F');
+
+      doc.setFont('helvetica', v && v!=='NA' && v>=4 ? 'bold' : 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(40,40,60);
+      doc.text(String(q.n), M+2, y+5);
+
+      // Truncate long question text
+      const qText = q.t.length > 68 ? q.t.substring(0,65)+'...' : q.t;
+      doc.text(qText, M+10, y+5);
+      doc.setTextColor(80,80,110);
+      doc.text(domainLabels[q.d], M+107, y+5);
+
+      // Score with colour
+      const score = v || '—';
+      if (v && v !== 'NA') {
+        const sc = [null,[46,125,82],[140,110,0],[201,107,0],[192,70,0],[192,32,32]][v] || [40,40,60];
+        doc.setTextColor(...sc);
+        doc.setFont('helvetica','bold');
+      } else {
+        doc.setTextColor(150,150,150);
+        doc.setFont('helvetica','normal');
+      }
+      doc.text(String(score), M+136, y+5, {align:'center'});
+      y += rowH;
+
+      // Check page overflow
+      if (y > 270) { doc.addPage(); y = 14; }
+    });
+
+    // Subtotal row
+    doc.setFillColor(214,228,247);
+    doc.rect(M, y, tableW, 8, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(27,58,107);
+    doc.text(`TOTAL: ${amsTotal}   |   Somatico: ${somatico}   |   Sexual: ${sexual}   |   Psicologico: ${psico}`, M+4, y+5.5);
+    y += 14;
+
+    // ── ADAM DETAIL ────────────────────────────────────────────────────
+    if (y > 240) { doc.addPage(); y = 14; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(27,58,107);
+    doc.text('RESPOSTAS ADAM', M, y+5);
+    y += 8;
+
+    // header
+    doc.setFillColor(31,92,153);
+    doc.rect(M, y, tableW, 7, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(255,255,255);
+    doc.text('#', M+2, y+5);
+    doc.text('Pergunta', M+10, y+5);
+    doc.text('Resposta', M+145, y+5);
+    y += 7;
+
+    ADAM_Q.forEach((q, i) => {
+      const v = adamAnswers[q.n];
+      const rowH = 7;
+      const bg = i%2===0 ? [248,250,255] : [255,255,255];
+      doc.setFillColor(...bg);
+      doc.rect(M, y, tableW, rowH, 'F');
+      doc.setFont('helvetica', q.key ? 'bold' : 'normal');
+      doc.setFontSize(7.5); doc.setTextColor(40,40,60);
+      doc.text(`${q.n}${q.key?' *':''}`, M+2, y+5);
+      const qText = q.t.length > 78 ? q.t.substring(0,75)+'...' : q.t;
+      doc.text(qText, M+10, y+5);
+      const ans = v === 'SIM' ? 'SIM' : v === 'NAO' ? 'NAO' : '—';
+      const ansColor = v==='SIM' ? [46,125,82] : v==='NAO' ? [192,32,32] : [150,150,150];
+      doc.setTextColor(...ansColor); doc.setFont('helvetica','bold');
+      doc.text(ans, M+tableW-4, y+5, {align:'right'});
+      y += rowH;
+    });
+    doc.setFillColor(214,228,247);
+    doc.rect(M, y, tableW, 7, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(27,58,107);
+    doc.text(`* Perguntas-chave diagnosticas   |   ADAM: ${adamPos ? 'POSITIVO' : 'NEGATIVO'} (${adamSIM} SIM)`, M+4, y+5);
+    y += 13;
+
+    // ── VAS DETAIL ─────────────────────────────────────────────────────
+    if (y > 240) { doc.addPage(); y = 14; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(27,58,107);
+    doc.text('ESCALAS VAS (0–10)', M, y+5);
+    y += 8;
+
+    doc.setFillColor(31,92,153);
+    doc.rect(M, y, tableW, 7, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(255,255,255);
+    doc.text('Area / Dominio', M+4, y+5);
+    doc.text('Valor', M+tableW-4, y+5, {align:'right'});
+    y += 7;
+
+    let lastSection = null;
+    VAS_Q.forEach((q, i) => {
+      if (q.section !== lastSection) {
+        lastSection = q.section;
+        doc.setFillColor(214,228,247);
+        doc.rect(M, y, tableW, 6, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(27,58,107);
+        doc.text(q.section.toUpperCase(), M+4, y+4.5);
+        y += 6;
+      }
+      const v = vasAnswers[q.id];
+      const rowH = 7;
+      const bg = i%2===0 ? [248,250,255] : [255,255,255];
+      doc.setFillColor(...bg);
+      doc.rect(M, y, tableW, rowH, 'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(40,40,60);
+      doc.text(q.label, M+4, y+5);
+
+      const val = v !== undefined ? String(v) : '—';
+      let vc = [40,40,60];
+      if (v !== undefined) {
+        if (v <= 3) vc = [46,125,82];
+        else if (v <= 6) vc = [201,107,0];
+        else vc = [192,32,32];
+      }
+      doc.setTextColor(...vc); doc.setFont('helvetica','bold');
+      doc.text(val, M+tableW-4, y+5, {align:'right'});
+
+      // Mini bar
+      if (v !== undefined) {
+        const barW = 50;
+        const barX = M + tableW - 4 - barW - 12;
+        doc.setFillColor(220,220,220);
+        doc.roundedRect(barX, y+2.5, barW, 2, 0.5, 0.5, 'F');
+        doc.setFillColor(...vc);
+        doc.roundedRect(barX, y+2.5, (v/10)*barW, 2, 0.5, 0.5, 'F');
+      }
+      y += rowH;
+    });
+
+    // ── FOOTER ─────────────────────────────────────────────────────────
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFillColor(240,244,250);
+      doc.rect(0, 287, 210, 10, 'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,120,160);
+      doc.text('Avaliacao DAEM  |  Clinica Baros  |  Dr. Heitor Portella Povoas Filho — CRM 11.157', M, 293);
+      doc.text(`Pagina ${p} / ${totalPages}`, W-M, 293, {align:'right'});
+    }
+
+    const safeName = (document.getElementById('f-name').value || 'paciente')
+      .toLowerCase().replace(/[^a-z0-9]/g,'_').substring(0,20);
+    const safeDate = (document.getElementById('f-date').value || '').replace(/-/g,'');
+    doc.save(`DAEM_${safeName}_${safeDate}.pdf`);
+    resolve();
+  });
+}
+
+function sendWhatsApp() {
+  const name    = document.getElementById('f-name').value   || '—';
+  const dob     = document.getElementById('f-dob').value    || '—';
+  const weight  = document.getElementById('f-weight').value || '—';
+  const height  = document.getElementById('f-height').value || '—';
+  const dateVal = document.getElementById('f-date').value   || new Date().toLocaleDateString('pt-BR');
+
+  // AMS scoring
+  let somatico = 0, sexual = 0, psico = 0;
+  AMS_Q.forEach(q => {
+    const v = amsAnswers[q.n];
+    if (!v || v === 'NA') return;
+    if (q.d === 'P')  somatico += v;
+    if (q.d === 'S')  sexual   += v;
+    if (q.d === 'PS') psico    += v;
+  });
+  const amsTotal = somatico + sexual + psico;
+
+  const adamSIM = Object.values(adamAnswers).filter(v => v === 'SIM').length;
+  const adamPos = adamAnswers[1]==='SIM' || adamAnswers[7]==='SIM' || adamSIM >= 3;
+
+  let msg = '';
+  msg += `*AVALIAÇÃO DAEM — Clínica Baros*\n`;
+  msg += `*Dr. Heitor Portella Póvoas Filho*\n`;
+  msg += `─────────────────────\n`;
+  msg += `*Paciente:* ${name}\n`;
+  msg += `*Data de nascimento:* ${dob}\n`;
+  msg += `*Peso/Altura:* ${weight} kg / ${height} cm\n`;
+  msg += `*Data:* ${dateVal}\n`;
+  msg += `─────────────────────\n`;
+  msg += `*RESULTADO AMS*\n`;
+  msg += `Total: *${amsTotal} pontos*\n`;
+  msg += `Somático: ${somatico} | Sexual: ${sexual} | Psicológico: ${psico}\n`;
+  if      (amsTotal < 27) msg += `Classificação: Sem déficit significativo\n`;
+  else if (amsTotal < 37) msg += `Classificação: ⚠ Sintomas Leves\n`;
+  else if (amsTotal < 50) msg += `Classificação: ⚠ Sintomas Moderados\n`;
+  else                    msg += `Classificação: 🔴 Sintomas Graves\n`;
+  msg += `─────────────────────\n`;
+  msg += `*RESULTADO ADAM*\n`;
+  msg += adamPos ? `🔴 POSITIVO (${adamSIM} SIM)\n` : `✅ NEGATIVO (${adamSIM} SIM)\n`;
+  msg += `─────────────────────\n`;
+  msg += `*RESPOSTAS AMS (Q1–Q17):*\n`;
+  AMS_Q.forEach(q => {
+    const v = amsAnswers[q.n];
+    msg += `Q${q.n}: ${v || '—'} `;
+  });
+  msg += `\n─────────────────────\n`;
+  msg += `*RESPOSTAS ADAM (Q1–Q10):*\n`;
+  ADAM_Q.forEach(q => {
+    const v = adamAnswers[q.n];
+    msg += `Q${q.n}: ${v === 'NAO' ? 'NÃO' : (v || '—')} `;
+  });
+  msg += `\n─────────────────────\n`;
+  msg += `*ESCALAS VAS (0–10):*\n`;
+  VAS_Q.forEach(q => {
+    const v = vasAnswers[q.id] !== undefined ? vasAnswers[q.id] : '—';
+    msg += `${q.label}: ${v}\n`;
+  });
+
+  // YOUR WhatsApp number — replace with your real number (country code + number, no + or spaces)
+  const PHONE = '5571999892070';
+  const url = `https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
 function copySummary() {
   const name = document.getElementById('f-name').value || '—';
   const date = document.getElementById('f-date').value || new Date().toLocaleDateString('pt-BR');
