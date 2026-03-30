@@ -560,24 +560,24 @@ body{font-family:'Geist',sans-serif;background:var(--cream);color:var(--ink);min
       <!-- ══ AI TRANSCRIPTION WIDGET ══ -->
       <div class="ai-widget" id="ai-widget">
         <div class="ai-widget-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Transcrição com IA
         </div>
-        <div class="ai-widget-sub">Grave a consulta ou envie um áudio — Claude transcreve e preenche a anamnese automaticamente</div>
+        <div class="ai-widget-sub">Grave no Voice Memos do iPhone → envie o arquivo → Claude preenche a anamnese automaticamente</div>
 
         <div class="ai-controls">
-          <button class="btn-record" id="rec-btn" onclick="toggleRecording()">
-            <span class="rec-dot"></span>
-            <span id="rec-label">Gravar consulta</span>
-          </button>
-          <span class="rec-timer" id="rec-timer" style="display:none">00:00</span>
           <label class="btn-upload">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Enviar áudio
+            Enviar áudio (Voice Memos / mp3 / m4a)
             <input type="file" id="audio-upload" accept="audio/*" style="display:none" onchange="handleAudioUpload(this)">
           </label>
+
         </div>
         <div class="ai-status" id="ai-status"></div>
+        <div style="font-size:11px;opacity:.55;margin-top:10px;line-height:1.6">
+          💡 <strong>Como usar:</strong> Grave no <strong>Voice Memos</strong> do iPhone durante a consulta → 
+          transfira via AirDrop para o Mac → clique "Enviar áudio" → Claude preenche os campos automaticamente.
+        </div>
         <div class="ai-preview" id="ai-preview"></div>
         <div class="ai-actions" id="ai-actions">
           <button class="btn-apply" onclick="applyTranscription()">✓ Aplicar ao formulário</button>
@@ -1437,35 +1437,56 @@ function startRecording() {
 
     recognition = new SpeechRecognition();
     recognition.lang            = 'pt-BR';
-    recognition.continuous      = false;   // Safari: false works better
+    recognition.continuous      = false;
     recognition.interimResults  = true;
     recognition.maxAlternatives = 1;
 
+    recognition.onstart = () => {
+      setStatus('🔴 Microfone ativo — fale agora...');
+    };
+
+    recognition.onspeechstart = () => {
+      setStatus('🔴 Detectando voz...');
+    };
+
     recognition.onresult = (event) => {
       for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          fullTranscript += event.results[i][0].transcript + ' ';
-          setStatus(`🔴 Gravando... "${fullTranscript.slice(-80)}"`);
+          fullTranscript += t + ' ';
+          setStatus(`🔴 Capturado: "${fullTranscript.slice(-100)}"`);
+        } else {
+          setStatus(`🔴 Ouvindo: "${t}"`);
         }
       }
     };
 
     recognition.onerror = (e) => {
-      if (e.error === 'no-speech' || e.error === 'aborted') {
-        // Normal — restart silently
-        if (isRecording) restartTimer = setTimeout(createAndStart, 200);
-      } else {
-        setStatus(`⚠ Erro: ${e.error}. Verifique as permissões do microfone.`);
+      if (e.error === 'no-speech') {
+        // Normal between sentences — restart silently
+        if (isRecording) restartTimer = setTimeout(createAndStart, 300);
+      } else if (e.error === 'aborted') {
+        if (isRecording) restartTimer = setTimeout(createAndStart, 300);
+      } else if (e.error === 'not-allowed') {
+        setStatus('⚠ Microfone bloqueado. No Safari: menu Safari → Configurações → Sites → Microfone → Permitir para este site.');
+        isRecording = false;
         stopRecording();
+      } else if (e.error === 'network') {
+        setStatus('⚠ Erro de rede. A Web Speech API requer conexão com internet no Safari.');
+        if (isRecording) restartTimer = setTimeout(createAndStart, 1000);
+      } else {
+        setStatus(`⚠ Erro: ${e.error}`);
+        if (isRecording) restartTimer = setTimeout(createAndStart, 500);
       }
     };
 
     recognition.onend = () => {
-      // Auto-restart to keep recording continuously
-      if (isRecording) restartTimer = setTimeout(createAndStart, 200);
+      if (isRecording) restartTimer = setTimeout(createAndStart, 300);
     };
 
-    try { recognition.start(); } catch(e) {
+    try {
+      recognition.start();
+    } catch(e) {
       if (isRecording) restartTimer = setTimeout(createAndStart, 500);
     }
   }
@@ -1513,7 +1534,7 @@ function stopRecording() {
 function handleAudioUpload(input) {
   const file = input.files[0];
   if (!file) return;
-  setStatus(`📂 Transcrevendo ${file.name} via IA...`, true);
+  setStatus(`📂 Enviando ${file.name} para transcrição...`, true);
   transcribeWithProxy(file);
   input.value = '';
 }
@@ -1554,7 +1575,7 @@ Se o formato não for suportado, responda exatamente: FORMATO_NAO_SUPORTADO`
     const text = data.content?.[0]?.text || '';
 
     if (text === 'FORMATO_NAO_SUPORTADO' || text.includes('FORMATO_NAO_SUPORTADO')) {
-      setStatus('⚠ Formato não suportado. Use a gravação direta pelo botão "Gravar consulta", ou converta o áudio para mp3 e tente novamente.');
+      setStatus('⚠ Formato não suportado. Converta o áudio para mp3 ou m4a e tente novamente. No iPhone: Voice Memos salva em m4a por padrão.');
       return;
     }
 
@@ -1562,7 +1583,7 @@ Se o formato não for suportado, responda exatamente: FORMATO_NAO_SUPORTADO`
       fullTranscript = text;
       extractClinicalInfo(text);
     } else {
-      setStatus('⚠ Não foi possível transcrever. Use a gravação direta clicando em "Gravar consulta".');
+      setStatus('⚠ Não foi possível transcrever automaticamente. Tente com um arquivo mp3 ou m4a gravado pelo Voice Memos.');
     }
   } catch(err) {
     setStatus('⚠ Erro na transcrição. Use a gravação direta clicando em "Gravar consulta".');
@@ -1690,6 +1711,44 @@ function discardTranscription() {
 }
 
 // ── UTILS ──────────────────────────────────────────────────────────────────
+// ── MIC TEST ──────────────────────────────────────────────────────────────
+async function testMic() {
+  setStatus('🔍 Testando microfone...', true);
+  try {
+    // Test 1: getUserMedia
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(t => t.stop());
+    setStatus('✅ Microfone hardware: OK. Testando Web Speech API...');
+
+    // Test 2: SpeechRecognition
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setStatus('⚠ Web Speech API não disponível neste browser. Use Chrome ou Safari 14.1+.');
+      return;
+    }
+    const r = new SR();
+    r.lang = 'pt-BR';
+    r.continuous = false;
+    r.interimResults = false;
+    r.onstart  = () => setStatus('✅ Web Speech API: OK. Fale algo para testar...');
+    r.onresult = (e) => {
+      const t = e.results[0][0].transcript;
+      setStatus(`✅ TUDO OK! Captei: "${t}" — pode usar Gravar consulta.`);
+      r.stop();
+    };
+    r.onerror  = (e) => setStatus(`⚠ Web Speech API erro: "${e.error}". ${
+      e.error==='not-allowed' ? 'Permita o microfone nas configurações do Safari.' :
+      e.error==='network'     ? 'Requer conexão com internet (Safari envia para servidores Apple).' :
+      'Tente recarregar a página.'
+    }`);
+    r.onend    = () => {};
+    r.start();
+    setTimeout(() => { try { r.stop(); } catch(e){} }, 5000);
+  } catch(err) {
+    setStatus(`⚠ Microfone bloqueado: ${err.message}. Permita nas configurações do browser.`);
+  }
+}
+
 function blobToBase64(blob) {
   return new Promise((res, rej) => {
     const reader = new FileReader();
