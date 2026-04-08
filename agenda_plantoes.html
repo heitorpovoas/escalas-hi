@@ -268,7 +268,8 @@ body {
 
 <div class="legend-bar">
   <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#adb5bd">Legenda:</span>
-  <div class="legend-item"><div class="legend-dot" style="background:#0ca678"></div> Plantão HI (Ilhéus)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59f00"></div> Plantão HI</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0ca678"></div> ILHÉUS</div>
   <div class="legend-item"><div class="legend-dot" style="background:#228be6"></div> Plantão HOE</div>
   <div class="legend-item"><div class="legend-dot" style="background:#ff922b"></div> Viagem / Deslocamento</div>
   <div class="legend-item"><div class="legend-dot" style="background:#adb5bd"></div> Outros</div>
@@ -421,13 +422,15 @@ const TODAY = new Date().toISOString().slice(0,10);
 function classify(text) {
   if (!text) return 'outro';
   const t = text.toUpperCase();
-  if (t.includes('PLANTÃO HI') || t.includes('ILHÉUS') || t.includes('ILHEUS')) return 'hi';
+  if (t.includes('PLANTÃO HI')) return 'plantao_hi';
+  if (t.includes('ILHÉUS') || t.includes('ILHEUS')) return 'ilheus';
   if (t.includes('PLANTÃO HOE') || t.includes('HOE')) return 'hoe';
   if (t.includes('VOO') || t.includes('CARRO') || t.includes('AGUIA') || t.includes('SSA') || t.includes('IOS') || t.includes('MACAPÁ') || t.includes('VIAGEM')) return 'viagem';
   return 'outro';
 }
 const TAG_STYLES = {
-  hi:     { bg:'#e6fcf5', color:'#0ca678', dot:'#0ca678' },
+  plantao_hi: { bg:'#fff9db', color:'#e67700', dot:'#f59f00' },
+  ilheus:     { bg:'#e6fcf5', color:'#0ca678', dot:'#0ca678' },
   hoe:    { bg:'#e7f5ff', color:'#1c7ed6', dot:'#228be6' },
   viagem: { bg:'#fff4e6', color:'#d9480f', dot:'#ff922b' },
   outro:  { bg:'#f1f3f5', color:'#495057', dot:'#adb5bd' },
@@ -527,7 +530,8 @@ function renderCal() {
 function catStyle(text) {
   const cls = classify(text || '');
   const map = {
-    hi:     { bg:'#e6fcf5', tx:'#087f5b', icon:'#0ca678' },
+    plantao_hi: { bg:'#fff9db', tx:'#e67700', icon:'#f59f00' },
+    ilheus:     { bg:'#e6fcf5', tx:'#087f5b', icon:'#0ca678' },
     hoe:    { bg:'#dbe4ff', tx:'#3b5bdb', icon:'#4263eb' },
     viagem: { bg:'#fff4e6', tx:'#d9480f', icon:'#f76707' },
     outro:  { bg:'#f1f3f5', tx:'#495057', icon:'#868e96' },
