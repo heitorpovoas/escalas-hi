@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1F4E79">
+<title>Avaliação do Sono — Clínica Baros</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --baros-blue: #1F4E79;
+  --baros-blue-dark: #0F2B45;
+  --baros-blue-light: #D9E2F3;
+  --baros-gold: #C9A961;
+  --baros-gold-light: #FDF8EC;
+  --text-dark: #1A1A1A;
+  --text-muted: #6B6B6B;
+  --bg: #F7F5F0;
+  --white: #FFFFFF;
+  --border: #E0DCD4;
+  --green: #2E5F3F;
+  --green-bg: #ECF3EE;
+  --amber: #B8860B;
+  --amber-bg: #FBF5E0;
+  --red: #8B2E2E;
+  --red-bg: #FBEEEE;
+  --whatsapp: #25D366;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text-dark);
+  line-height: 1.5;
+  font-size: 16px;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+.container { max-width: 720px; margin: 0 auto; }
+
+/* HEADER */
+header {
+  background: var(--baros-blue-dark);
+  color: var(--white);
+  padding: 32px 24px 28px;
+  border-radius: 16px 16px 0 0;
+  text-align: center;
+  position: relative;
+}
+header::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--baros-gold);
+  border-radius: 16px 16px 0 0;
+}
+.tag {
+  font-size: 11px; letter-spacing: 2px; color: var(--baros-gold);
+  font-weight: 600; text-transform: uppercase; margin-bottom: 12px;
+}
+header h1 {
+  font-size: 26px; font-weight: 700; line-height: 1.2;
+  font-family: "Georgia", serif; color: var(--white);
+}
+header .subtitle {
+  font-size: 14px; color: #B8C5D6; font-style: italic;
+  margin-top: 8px;
+}
+
+/* CARDS */
+.card {
+  background: var(--white);
+  padding: 24px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.card:last-of-type { border-radius: 0 0 16px 16px; }
+
+.section-title {
+  font-size: 18px; font-weight: 700; color: var(--baros-blue);
+  margin-bottom: 4px; font-family: "Georgia", serif;
+}
+.section-desc {
+  font-size: 13px; color: var(--text-muted);
+  margin-bottom: 18px; font-style: italic;
+}
+.section-num {
+  display: inline-block;
+  background: var(--baros-gold); color: var(--white);
+  font-size: 12px; font-weight: 700;
+  padding: 4px 10px; border-radius: 100px;
+  margin-bottom: 12px; letter-spacing: 1px;
+}
+
+/* IDENTIFICAÇÃO */
+.field { margin-bottom: 14px; }
+.field label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--baros-blue); margin-bottom: 6px;
+}
+.field input {
+  width: 100%; padding: 12px 14px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 16px; font-family: inherit;
+  background: var(--white); color: var(--text-dark);
+  transition: border-color .15s;
+  -webkit-appearance: none;
+}
+.field input:focus { outline: none; border-color: var(--baros-blue); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* QUESTÃO */
+.question {
+  padding: 16px 14px; margin-bottom: 12px;
+  background: var(--baros-gold-light);
+  border-left: 4px solid var(--baros-gold);
+  border-radius: 4px;
+}
+.q-text {
+  font-size: 15px; font-weight: 500;
+  color: var(--text-dark); margin-bottom: 10px;
+  line-height: 1.4;
+}
+.q-num {
+  display: inline-block;
+  background: var(--baros-blue); color: var(--white);
+  font-size: 12px; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+  margin-right: 8px;
+}
+
+/* OPÇÕES */
+.options { display: flex; gap: 8px; flex-wrap: wrap; }
+.option {
+  flex: 1 1 calc(50% - 4px);
+  min-width: 130px;
+  padding: 12px;
+  border: 2px solid var(--border); border-radius: 8px;
+  background: var(--white); cursor: pointer;
+  text-align: center; font-size: 14px;
+  transition: all .15s;
+  user-select: none;
+}
+.option:active { transform: scale(0.98); }
+.option.selected {
+  background: var(--baros-blue);
+  color: var(--white);
+  border-color: var(--baros-blue);
+  font-weight: 600;
+}
+
+/* OPÇÕES EPWORTH (4 opções) */
+.options-4 .option { flex: 1 1 calc(50% - 4px); }
+
+/* PROGRESSO */
+.progress-bar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--bg); padding: 12px 0; margin: 0 -16px 0;
+}
+.progress-track {
+  height: 6px; background: var(--border);
+  border-radius: 100px; margin: 0 16px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: var(--baros-gold);
+  border-radius: 100px;
+  transition: width .25s;
+}
+.progress-text {
+  text-align: center; font-size: 12px; color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* BOTÕES */
+.btn {
+  display: block; width: 100%;
+  padding: 16px;
+  border: none; border-radius: 10px;
+  font-size: 16px; font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+  -webkit-appearance: none;
+}
+.btn-primary {
+  background: var(--baros-blue); color: var(--white);
+}
+.btn-primary:active { background: var(--baros-blue-dark); }
+.btn-primary:disabled {
+  background: #B0B0B0; cursor: not-allowed;
+}
+.btn-whatsapp {
+  background: var(--whatsapp); color: var(--white);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn-whatsapp:active { background: #1FB855; }
+.btn-secondary {
+  background: var(--white); color: var(--baros-blue);
+  border: 2px solid var(--baros-blue);
+}
+.btn-secondary:active { background: var(--baros-blue-light); }
+
+.actions { padding: 20px; background: var(--white); border-radius: 0 0 16px 16px; }
+.actions .btn + .btn { margin-top: 10px; }
+
+/* RESULTADOS */
+.results .result-block {
+  padding: 18px 16px; margin-bottom: 14px;
+  border-radius: 10px;
+  border-left: 5px solid;
+}
+.result-block.green { background: var(--green-bg); border-color: var(--green); }
+.result-block.amber { background: var(--amber-bg); border-color: var(--amber); }
+.result-block.red { background: var(--red-bg); border-color: var(--red); }
+
+.result-block h3 {
+  font-size: 16px; font-weight: 700;
+  color: var(--baros-blue); margin-bottom: 4px;
+}
+.result-score {
+  font-size: 32px; font-weight: 700;
+  color: var(--baros-blue); margin: 4px 0;
+  font-family: "Georgia", serif;
+}
+.result-classification {
+  font-size: 14px; font-weight: 600;
+  margin-bottom: 8px;
+}
+.classification-green { color: var(--green); }
+.classification-amber { color: var(--amber); }
+.classification-red { color: var(--red); }
+
+.result-text {
+  font-size: 14px; color: var(--text-dark);
+  line-height: 1.5;
+}
+
+.summary-box {
+  background: var(--baros-blue-dark); color: var(--white);
+  padding: 20px 18px; border-radius: 10px;
+  margin: 16px 0;
+  text-align: center;
+}
+.summary-box h3 {
+  color: var(--baros-gold); font-size: 12px;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 8px; font-weight: 600;
+}
+.summary-box p {
+  font-size: 14px; line-height: 1.5;
+  color: #D8DDE5;
+}
+
+/* FOOTER */
+footer {
+  text-align: center; padding: 20px 16px;
+  font-size: 11px; color: var(--text-muted);
+  line-height: 1.5;
+}
+footer p { margin-bottom: 4px; }
+
+/* HIDE */
+.hidden { display: none !important; }
+
+/* DESKTOP */
+@media (min-width: 768px) {
+  body { padding: 32px; }
+  header { padding: 40px 32px; }
+  header h1 { font-size: 32px; }
+  .card { padding: 32px; }
+  .actions { padding: 24px 32px; }
+}
+
+/* SAFARI iOS quirks */
+@supports (-webkit-touch-callout: none) {
+  .option, .btn { -webkit-touch-callout: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- ============ TELA 1: INTRODUÇÃO ============ -->
+<div id="screen-intro">
+  <header>
+    <div class="tag">AVALIAÇÃO CLÍNICA</div>
+    <h1>Avaliação do Sono</h1>
+    <div class="subtitle">Triagem para apneia obstrutiva do sono</div>
+  </header>
+
+  <div class="card">
+    <p style="margin-bottom: 14px;">Este questionário avalia sua qualidade de sono e o risco de apneia obstrutiva — uma condição comum, frequentemente subdiagnosticada, que afeta significativamente o metabolismo, hormônios e qualidade de vida.</p>
+    <p style="margin-bottom: 14px;">São <strong>2 etapas curtas</strong>:</p>
+    <ul style="margin: 0 0 16px 24px; line-height: 1.8;">
+      <li><strong>STOP-BANG</strong> (8 perguntas): risco de apneia</li>
+      <li><strong>Escala de Epworth</strong> (8 situações): sonolência diurna</li>
+    </ul>
+    <p style="color: var(--text-muted); font-size: 14px; font-style: italic;">Tempo estimado: 5–7 minutos. Suas respostas serão enviadas ao Dr. Heitor para análise.</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="startQuestionnaire()">Iniciar avaliação</button>
+  </div>
+</div>
+
+<!-- ============ TELA 2: IDENTIFICAÇÃO ============ -->
+<div id="screen-id" class="hidden">
+  <header>
+    <div class="tag">DADOS DO PACIENTE</div>
+    <h1>Identificação</h1>
+  </header>
+
+  <div class="card">
+    <div class="field">
+      <label for="name">Nome completo</label>
+      <input type="text" id="name" autocomplete="name" placeholder="Seu nome">
+    </div>
+    <div class="field">
+      <label for="age">Idade</label>
+      <input type="number" id="age" min="18" max="120" placeholder="Idade em anos">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="weight">Peso (kg)</label>
+        <input type="number" id="weight" min="30" max="300" step="0.1" placeholder="Ex: 85">
+      </div>
+      <div class="field">
+        <label for="height">Altura (cm)</label>
+        <input type="number" id="height" min="100" max="230" placeholder="Ex: 172">
+      </div>
+    </div>
+    <div class="field">
+      <label for="neck">Circunferência do pescoço (cm)</label>
+      <input type="number" id="neck" min="20" max="80" step="0.1" placeholder="Opcional">
+      <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Medida na altura do pomo de Adão. Se não souber, deixe em branco.</div>
+    </div>
+    <div class="field">
+      <label>Sexo</label>
+      <div class="options">
+        <div class="option" data-sex="M" onclick="setSex(this, 'M')">Masculino</div>
+        <div class="option" data-sex="F" onclick="setSex(this, 'F')">Feminino</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="goToStopbang()">Continuar →</button>
+  </div>
+</div>
+
+<!-- ============ TELA 3: STOP-BANG ============ -->
+<div id="screen-stopbang" class="hidden">
+  <header>
+    <div class="tag">PARTE 1 DE 2</div>
+    <h1>STOP-BANG</h1>
+    <div class="subtitle">Risco de apneia obstrutiva do sono</div>
+  </header>
+
+  <div class="progress-bar">
+    <div class="progress-track"><div class="progress-fill" id="stopbang-progress" style="width: 0%"></div></div>
+    <div class="progress-text" id="stopbang-progress-text">0 de 8 respondidas</div>
+  </div>
+
+  <div class="card" id="stopbang-questions"></div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="btn-to-epworth" onclick="goToEpworth()" disabled>Continuar para Epworth →</button>
+    <button class="btn btn-secondary" onclick="backToId()">← Voltar</button>
+  </div>
+</div>
+
+<!-- ============ TELA 4: EPWORTH ============ -->
+<div id="screen-epworth" class="hidden">
+  <header>
+    <div class="tag">PARTE 2 DE 2</div>
+    <h1>Escala de Sonolência</h1>
+    <div class="subtitle">Escala de Epworth</div>
+  </header>
+
+  <div class="card" style="background: var(--baros-gold-light); border-bottom: none;">
+    <p style="font-size: 14px; line-height: 1.6;">Considere sua rotina nas <strong>últimas semanas</strong>. Em cada situação abaixo, qual a chance de você cochilar ou adormecer (não apenas sentir cansaço)?</p>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-track"><div class="progress-fill" id="epworth-progress" style="width: 0%"></div></div>
+    <div class="progress-text" id="epworth-progress-text">0 de 8 respondidas</div>
+  </div>
+
+  <div class="card" id="epworth-questions"></div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="btn-to-results" onclick="calculateAndShowResults()" disabled>Ver resultados →</button>
+    <button class="btn btn-secondary" onclick="backToStopbang()">← Voltar</button>
+  </div>
+</div>
+
+<!-- ============ TELA 5: RESULTADOS ============ -->
+<div id="screen-results" class="hidden">
+  <header>
+    <div class="tag">RESULTADO</div>
+    <h1>Sua Avaliação</h1>
+    <div class="subtitle" id="results-subtitle">Resumo dos seus scores</div>
+  </header>
+
+  <div class="card results">
+
+    <div class="result-block" id="result-stopbang">
+      <h3>STOP-BANG — Risco de apneia</h3>
+      <div class="result-score" id="stopbang-score">0/8</div>
+      <div class="result-classification" id="stopbang-classification">—</div>
+      <div class="result-text" id="stopbang-text">—</div>
+    </div>
+
+    <div class="result-block" id="result-epworth">
+      <h3>Epworth — Sonolência diurna</h3>
+      <div class="result-score" id="epworth-score">0/24</div>
+      <div class="result-classification" id="epworth-classification">—</div>
+      <div class="result-text" id="epworth-text">—</div>
+    </div>
+
+    <div class="summary-box">
+      <h3>Próximo passo recomendado</h3>
+      <p id="recommendation-text">—</p>
+    </div>
+
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-whatsapp" onclick="sendWhatsApp()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </svg>
+      Enviar resultado ao Dr. Heitor
+    </button>
+    <button class="btn btn-secondary" onclick="generatePDF()">📄 Gerar PDF para meu arquivo</button>
+    <button class="btn btn-secondary" onclick="restart()">Refazer avaliação</button>
+  </div>
+</div>
+
+<footer>
+  <p><strong>Clínica Baros</strong> · Dr. Heitor Póvoas</p>
+  <p>CRM-BA 11.157 · RQE 2308 (Cirurgia Bariátrica e Metabólica)</p>
+  <p style="margin-top: 6px; font-style: italic;">Este é um instrumento de triagem, não diagnóstico. A interpretação clínica é feita em consulta médica.</p>
+</footer>
+
+</div>
+
+<script>
+// =============================================
+// CONFIGURAÇÃO
+// =============================================
+const WHATSAPP_NUMBER = "5571999892070";
+const CLINIC_NAME = "Clínica Baros";
+const DOCTOR_NAME = "Dr. Heitor Póvoas";
+
+// =============================================
+// PERGUNTAS
+// =============================================
+const stopbangQuestions = [
+  { id: 'S', q: 'Você ronca alto (mais alto que conversa normal ou audível através de portas fechadas)?' },
+  { id: 'T', q: 'Você frequentemente se sente cansado(a), fatigado(a) ou sonolento(a) durante o dia?' },
+  { id: 'O', q: 'Alguém já observou você parar de respirar, engasgar ou ofegar durante o sono?' },
+  { id: 'P', q: 'Você tem ou está em tratamento de pressão alta?' },
+  { id: 'B', q: 'Seu IMC é maior que 35 kg/m²?', auto: true },
+  { id: 'A', q: 'Sua idade é maior que 50 anos?', auto: true },
+  { id: 'N', q: 'Sua circunferência de pescoço é maior que 40 cm?', auto: true },
+  { id: 'G', q: 'Você é do sexo masculino?', auto: true }
+];
+
+const epworthSituations = [
+  'Sentado(a) lendo',
+  'Assistindo TV',
+  'Sentado(a) em lugar público sem atividade (cinema, igreja, reunião)',
+  'Como passageiro(a) em carro por uma hora sem parar',
+  'Deitado(a) à tarde para descansar quando as circunstâncias permitem',
+  'Sentado(a) conversando com alguém',
+  'Sentado(a) calmamente após almoço (sem álcool)',
+  'No carro parado por alguns minutos no trânsito'
+];
+
+const epworthOptions = [
+  { value: 0, label: 'Nenhuma' },
+  { value: 1, label: 'Pequena' },
+  { value: 2, label: 'Moderada' },
+  { value: 3, label: 'Alta' }
+];
+
+// =============================================
+// ESTADO
+// =============================================
+let answers = {
+  identification: {},
+  stopbang: {},
+  epworth: {}
+};
+
+// =============================================
+// NAVEGAÇÃO
+// =============================================
+function showScreen(id) {
+  document.querySelectorAll('[id^="screen-"]').forEach(s => s.classList.add('hidden'));
+  document.getElementById('screen-' + id).classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
+
+function startQuestionnaire() { showScreen('id'); }
+function backToId() { showScreen('id'); }
+function backToStopbang() { showScreen('stopbang'); }
+
+function setSex(el, sex) {
+  document.querySelectorAll('[data-sex]').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  answers.identification.sex = sex;
+}
+
+function goToStopbang() {
+  const name = document.getElementById('name').value.trim();
+  const age = document.getElementById('age').value;
+  const weight = document.getElementById('weight').value;
+  const height = document.getElementById('height').value;
+  const neck = document.getElementById('neck').value;
+
+  if (!name || !age || !weight || !height || !answers.identification.sex) {
+    alert('Por favor, preencha pelo menos: nome, idade, peso, altura e sexo.');
+    return;
+  }
+
+  answers.identification.name = name;
+  answers.identification.age = parseInt(age);
+  answers.identification.weight = parseFloat(weight);
+  answers.identification.height = parseFloat(height);
+  answers.identification.neck = neck ? parseFloat(neck) : null;
+  answers.identification.bmi = (parseFloat(weight) / Math.pow(parseFloat(height) / 100, 2));
+
+  renderStopbang();
+  showScreen('stopbang');
+}
+
+// =============================================
+// STOP-BANG
+// =============================================
+function renderStopbang() {
+  const container = document.getElementById('stopbang-questions');
+  container.innerHTML = '';
+
+  stopbangQuestions.forEach((q, idx) => {
+    if (q.auto) {
+      // Calculadas automaticamente
+      let autoValue = false;
+      let autoText = '';
+      if (q.id === 'B') {
+        autoValue = answers.identification.bmi > 35;
+        autoText = `IMC calculado: ${answers.identification.bmi.toFixed(1)} kg/m² → ${autoValue ? 'Sim' : 'Não'}`;
+      }
+      if (q.id === 'A') {
+        autoValue = answers.identification.age > 50;
+        autoText = `Idade: ${answers.identification.age} anos → ${autoValue ? 'Sim' : 'Não'}`;
+      }
+      if (q.id === 'N') {
+        if (!answers.identification.neck) {
+          autoText = 'Não informado — será considerado "Não"';
+          autoValue = false;
+        } else {
+          autoValue = answers.identification.neck > 40;
+          autoText = `Pescoço: ${answers.identification.neck} cm → ${autoValue ? 'Sim' : 'Não'}`;
+        }
+      }
+      if (q.id === 'G') {
+        autoValue = answers.identification.sex === 'M';
+        autoText = `Sexo: ${answers.identification.sex === 'M' ? 'Masculino' : 'Feminino'} → ${autoValue ? 'Sim' : 'Não'}`;
+      }
+      answers.stopbang[q.id] = autoValue ? 1 : 0;
+      container.innerHTML += `
+        <div class="question" style="background: #F0F0F0; border-color: #B0B0B0;">
+          <div class="q-text"><span class="q-num" style="background: var(--text-muted);">${idx+1}</span>${q.q}</div>
+          <div style="font-size: 13px; color: var(--text-muted); font-style: italic;">${autoText}</div>
+        </div>
+      `;
+    } else {
+      container.innerHTML += `
+        <div class="question">
+          <div class="q-text"><span class="q-num">${idx+1}</span>${q.q}</div>
+          <div class="options">
+            <div class="option" data-q="${q.id}" data-v="0" onclick="setStopbang('${q.id}', 0, this)">Não</div>
+            <div class="option" data-q="${q.id}" data-v="1" onclick="setStopbang('${q.id}', 1, this)">Sim</div>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  updateStopbangProgress();
+}
+
+function setStopbang(id, value, el) {
+  document.querySelectorAll(`[data-q="${id}"]`).forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  answers.stopbang[id] = value;
+  updateStopbangProgress();
+}
+
+function updateStopbangProgress() {
+  // Conta quantas das 4 perguntas manuais foram respondidas
+  const manualIds = ['S', 'T', 'O', 'P'];
+  const answered = manualIds.filter(id => answers.stopbang[id] !== undefined).length;
+  const pct = (answered / 4) * 100;
+  document.getElementById('stopbang-progress').style.width = pct + '%';
+  document.getElementById('stopbang-progress-text').textContent = `${answered} de 4 perguntas respondidas (4 calculadas)`;
+  document.getElementById('btn-to-epworth').disabled = answered < 4;
+}
+
+function goToEpworth() {
+  renderEpworth();
+  showScreen('epworth');
+}
+
+// =============================================
+// EPWORTH
+// =============================================
+function renderEpworth() {
+  const container = document.getElementById('epworth-questions');
+  container.innerHTML = '';
+
+  epworthSituations.forEach((sit, idx) => {
+    const optsHtml = epworthOptions.map(opt => `
+      <div class="option" data-eq="${idx}" data-v="${opt.value}" onclick="setEpworth(${idx}, ${opt.value}, this)">${opt.label}</div>
+    `).join('');
+
+    container.innerHTML += `
+      <div class="question">
+        <div class="q-text"><span class="q-num">${idx+1}</span>${sit}</div>
+        <div class="options options-4">${optsHtml}</div>
+      </div>
+    `;
+  });
+
+  updateEpworthProgress();
+}
+
+function setEpworth(idx, value, el) {
+  document.querySelectorAll(`[data-eq="${idx}"]`).forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  answers.epworth[idx] = value;
+  updateEpworthProgress();
+}
+
+function updateEpworthProgress() {
+  const answered = Object.keys(answers.epworth).length;
+  const pct = (answered / 8) * 100;
+  document.getElementById('epworth-progress').style.width = pct + '%';
+  document.getElementById('epworth-progress-text').textContent = `${answered} de 8 respondidas`;
+  document.getElementById('btn-to-results').disabled = answered < 8;
+}
+
+// =============================================
+// CÁLCULO
+// =============================================
+function calculateScores() {
+  // STOP-BANG: soma de todos os 8 itens
+  const stopbangScore = Object.values(answers.stopbang).reduce((a, b) => a + b, 0);
+  let stopbangClass, stopbangColor, stopbangText;
+  if (stopbangScore <= 2) {
+    stopbangClass = 'Risco baixo';
+    stopbangColor = 'green';
+    stopbangText = 'Probabilidade baixa de apneia obstrutiva do sono moderada/grave.';
+  } else if (stopbangScore <= 4) {
+    stopbangClass = 'Risco intermediário';
+    stopbangColor = 'amber';
+    stopbangText = 'Probabilidade intermediária de apneia obstrutiva do sono. Avaliação clínica recomendada.';
+  } else {
+    stopbangClass = 'Risco alto';
+    stopbangColor = 'red';
+    stopbangText = 'Alta probabilidade de apneia obstrutiva do sono moderada/grave. Avaliação clínica e provável investigação com polissonografia recomendadas.';
+  }
+
+  // EPWORTH: soma de 0-24
+  const epworthScore = Object.values(answers.epworth).reduce((a, b) => a + b, 0);
+  let epworthClass, epworthColor, epworthText;
+  if (epworthScore <= 9) {
+    epworthClass = 'Sonolência diurna normal';
+    epworthColor = 'green';
+    epworthText = 'Seu nível de sonolência diurna está dentro do esperado.';
+  } else if (epworthScore <= 13) {
+    epworthClass = 'Sonolência leve a moderada';
+    epworthColor = 'amber';
+    epworthText = 'Sonolência diurna acima do esperado. Pode comprometer atenção, humor e produtividade.';
+  } else if (epworthScore <= 17) {
+    epworthClass = 'Sonolência moderada a grave';
+    epworthColor = 'amber';
+    epworthText = 'Sonolência diurna importante. Avaliação clínica recomendada.';
+  } else {
+    epworthClass = 'Sonolência grave';
+    epworthColor = 'red';
+    epworthText = 'Sonolência diurna grave. Pode haver risco em atividades como dirigir. Avaliação prioritária recomendada.';
+  }
+
+  return { stopbangScore, stopbangClass, stopbangColor, stopbangText, epworthScore, epworthClass, epworthColor, epworthText };
+}
+
+function calculateAndShowResults() {
+  const r = calculateScores();
+  const id = answers.identification;
+
+  // STOP-BANG
+  document.getElementById('stopbang-score').textContent = `${r.stopbangScore}/8`;
+  document.getElementById('stopbang-classification').textContent = r.stopbangClass;
+  document.getElementById('stopbang-classification').className = 'result-classification classification-' + r.stopbangColor;
+  document.getElementById('stopbang-text').textContent = r.stopbangText;
+  document.getElementById('result-stopbang').className = 'result-block ' + r.stopbangColor;
+
+  // EPWORTH
+  document.getElementById('epworth-score').textContent = `${r.epworthScore}/24`;
+  document.getElementById('epworth-classification').textContent = r.epworthClass;
+  document.getElementById('epworth-classification').className = 'result-classification classification-' + r.epworthColor;
+  document.getElementById('epworth-text').textContent = r.epworthText;
+  document.getElementById('result-epworth').className = 'result-block ' + r.epworthColor;
+
+  // RECOMENDAÇÃO
+  document.getElementById('recommendation-text').innerHTML = `Agende uma consulta com o <strong>${DOCTOR_NAME}</strong> para avaliação completa e definição da conduta. Este resultado pode ser enviado a ele agora pelo WhatsApp.`;
+
+  document.getElementById('results-subtitle').textContent = `${id.name}, ${id.age} anos`;
+
+  showScreen('results');
+}
+
+// =============================================
+// WHATSAPP
+// =============================================
+function sendWhatsApp() {
+  const r = calculateScores();
+  const id = answers.identification;
+
+  let msg = `*Avaliação do Sono — Clínica Baros*%0A`;
+  msg += `_Resultado de questionário on-line_%0A%0A`;
+  msg += `*Paciente:* ${id.name}%0A`;
+  msg += `*Idade:* ${id.age} anos%0A`;
+  msg += `*Sexo:* ${id.sex === 'M' ? 'Masculino' : 'Feminino'}%0A`;
+  msg += `*Peso:* ${id.weight} kg / *Altura:* ${id.height} cm%0A`;
+  msg += `*IMC:* ${id.bmi.toFixed(1)} kg/m²%0A`;
+  if (id.neck) msg += `*Pescoço:* ${id.neck} cm%0A`;
+  msg += `%0A`;
+
+  msg += `*━━━━━━━━━━━━━━━━━*%0A`;
+  msg += `*STOP-BANG:* ${r.stopbangScore}/8 — ${r.stopbangClass}%0A`;
+  stopbangQuestions.forEach((q, idx) => {
+    const v = answers.stopbang[q.id];
+    msg += `${idx+1}. ${q.id}: ${v ? 'Sim' : 'Não'}%0A`;
+  });
+  msg += `%0A`;
+
+  msg += `*━━━━━━━━━━━━━━━━━*%0A`;
+  msg += `*EPWORTH:* ${r.epworthScore}/24 — ${r.epworthClass}%0A`;
+  epworthSituations.forEach((sit, idx) => {
+    const v = answers.epworth[idx];
+    const lbl = epworthOptions.find(o => o.value === v).label;
+    msg += `${idx+1}. ${lbl} (${v})%0A`;
+  });
+  msg += `%0A`;
+  msg += `_Gostaria de agendar consulta para discutir esses resultados._`;
+
+  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
+  window.open(url, '_blank');
+}
+
+// =============================================
+// PDF
+// =============================================
+async function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const r = calculateScores();
+  const id = answers.identification;
+
+  let y = 20;
+
+  // Header — barra azul
+  doc.setFillColor(31, 78, 121);
+  doc.rect(0, 0, 210, 28, 'F');
+  doc.setFillColor(201, 169, 97);
+  doc.rect(0, 0, 210, 1.5, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('Avaliação do Sono', 105, 14, { align: 'center' });
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(10);
+  doc.text('Triagem para apneia obstrutiva do sono', 105, 21, { align: 'center' });
+
+  y = 38;
+
+  // Identificação
+  doc.setTextColor(31, 78, 121);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Identificação', 15, y);
+  y += 6;
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Nome: ${id.name}`, 15, y); y += 5;
+  doc.text(`Idade: ${id.age} anos    Sexo: ${id.sex === 'M' ? 'Masculino' : 'Feminino'}`, 15, y); y += 5;
+  doc.text(`Peso: ${id.weight} kg    Altura: ${id.height} cm    IMC: ${id.bmi.toFixed(1)} kg/m²`, 15, y); y += 5;
+  if (id.neck) { doc.text(`Pescoço: ${id.neck} cm`, 15, y); y += 5; }
+  doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 15, y); y += 10;
+
+  // STOP-BANG
+  doc.setDrawColor(201, 169, 97);
+  doc.setLineWidth(0.5);
+  doc.line(15, y, 195, y); y += 5;
+
+  doc.setTextColor(31, 78, 121);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(`STOP-BANG: ${r.stopbangScore}/8`, 15, y);
+  doc.setFontSize(11);
+  doc.setTextColor(...(r.stopbangColor === 'red' ? [139, 46, 46] : r.stopbangColor === 'amber' ? [184, 134, 11] : [46, 95, 63]));
+  doc.text(r.stopbangClass, 195, y, { align: 'right' });
+  y += 6;
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  const stopbangTextLines = doc.splitTextToSize(r.stopbangText, 180);
+  doc.text(stopbangTextLines, 15, y);
+  y += stopbangTextLines.length * 4 + 3;
+
+  doc.setFontSize(9);
+  stopbangQuestions.forEach((q, idx) => {
+    const v = answers.stopbang[q.id];
+    doc.text(`${idx+1}. (${q.id}) ${v ? 'Sim' : 'Não'} — ${q.q}`, 15, y, { maxWidth: 180 });
+    y += doc.getTextDimensions(`${idx+1}. (${q.id}) ${v ? 'Sim' : 'Não'} — ${q.q}`, { maxWidth: 180 }).h + 1;
+  });
+  y += 5;
+
+  // EPWORTH
+  doc.setDrawColor(201, 169, 97);
+  doc.line(15, y, 195, y); y += 5;
+
+  doc.setTextColor(31, 78, 121);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(`EPWORTH: ${r.epworthScore}/24`, 15, y);
+  doc.setFontSize(11);
+  doc.setTextColor(...(r.epworthColor === 'red' ? [139, 46, 46] : r.epworthColor === 'amber' ? [184, 134, 11] : [46, 95, 63]));
+  doc.text(r.epworthClass, 195, y, { align: 'right' });
+  y += 6;
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  const epworthTextLines = doc.splitTextToSize(r.epworthText, 180);
+  doc.text(epworthTextLines, 15, y);
+  y += epworthTextLines.length * 4 + 3;
+
+  epworthSituations.forEach((sit, idx) => {
+    const v = answers.epworth[idx];
+    const lbl = epworthOptions.find(o => o.value === v).label;
+    doc.text(`${idx+1}. ${sit} — ${lbl} (${v})`, 15, y, { maxWidth: 180 });
+    y += doc.getTextDimensions(`${idx+1}. ${sit} — ${lbl} (${v})`, { maxWidth: 180 }).h + 1;
+  });
+
+  // Footer
+  if (y > 260) { doc.addPage(); y = 20; }
+  y = 280;
+  doc.setDrawColor(31, 78, 121);
+  doc.line(15, y, 195, y);
+  doc.setTextColor(107, 107, 107);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'italic');
+  doc.text('Clínica Baros · Dr. Heitor Póvoas · CRM-BA 11.157 · RQE 2308', 105, y + 4, { align: 'center' });
+  doc.text('Av. Prof. Magalhães Neto, 1541 — Centro Médico Hospital da Bahia — Salvador/BA', 105, y + 8, { align: 'center' });
+  doc.text('Instrumento de triagem — interpretação clínica feita em consulta médica', 105, y + 12, { align: 'center' });
+
+  // Save
+  const fileName = `Sono_${id.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(fileName);
+}
+
+// =============================================
+// RESTART
+// =============================================
+function restart() {
+  if (!confirm('Tem certeza que deseja recomeçar? Todas as respostas serão apagadas.')) return;
+  answers = { identification: {}, stopbang: {}, epworth: {} };
+  document.getElementById('name').value = '';
+  document.getElementById('age').value = '';
+  document.getElementById('weight').value = '';
+  document.getElementById('height').value = '';
+  document.getElementById('neck').value = '';
+  document.querySelectorAll('.option.selected').forEach(o => o.classList.remove('selected'));
+  showScreen('intro');
+}
+</script>
+
+</body>
+</html>
