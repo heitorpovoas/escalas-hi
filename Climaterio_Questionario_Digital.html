@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Questionário FSFI + Greene — Isadora Teixeira Moura Moura</title>
+<title>Questionário FSFI + Greene — Climatério</title>
 <style>
   :root {
     --navy: #1A2E4E;
@@ -115,6 +115,26 @@
     font-weight: 600;
     background: var(--gold-light);
     max-width: 180px;
+  }
+  .patient-card input.text-input,
+  .patient-card select.select-input {
+    padding: 4px 8px;
+    border: 1px solid var(--gray-border);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--navy);
+    font-weight: 600;
+    background: var(--gold-light);
+    width: 100%;
+    max-width: 100%;
+  }
+  .patient-card input.text-input:focus,
+  .patient-card input.date-input:focus,
+  .patient-card select.select-input:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 2px rgba(42,127,127,0.15);
   }
 
   /* ── INSTRUCTIONS ── */
@@ -490,11 +510,11 @@
 <div class="patient-card">
   <div class="field">
     <label>Paciente</label>
-    <span class="value">Isadora Teixeira Moura Moura</span>
+    <input type="text" class="text-input" id="patientName" placeholder="Seu nome completo" autocomplete="name">
   </div>
   <div class="field">
     <label>Data de nascimento</label>
-    <span class="value">29/05/1980 (45 anos)</span>
+    <input type="date" class="date-input" id="patientDOB">
   </div>
   <div class="field">
     <label>Data do preenchimento</label>
@@ -502,7 +522,15 @@
   </div>
   <div class="field">
     <label>Status menstrual</label>
-    <span class="value">Menacme — ciclos regulares</span>
+    <select class="select-input" id="menstrualStatus">
+      <option value="">Selecione…</option>
+      <option value="Menacme — ciclos regulares">Menacme — ciclos regulares</option>
+      <option value="Menacme — ciclos irregulares">Menacme — ciclos irregulares</option>
+      <option value="Perimenopausa">Perimenopausa</option>
+      <option value="Pós-menopausa (≥ 12 meses sem menstruar)">Pós-menopausa (≥ 12 meses sem menstruar)</option>
+      <option value="Histerectomizada com ovários">Histerectomizada com ovários</option>
+      <option value="Histerectomizada sem ovários">Histerectomizada sem ovários</option>
+    </select>
   </div>
 </div>
 
@@ -861,10 +889,13 @@ const state = {
   fsfi: {},   // {1: 3, 2: 4, ...}
   greene: {}, // {1: 2, 2: 1, ...}
   notes: "",
-  date: ""
+  date: "",
+  name: "",
+  dob: "",
+  menstrualStatus: ""
 };
 
-const STORAGE_KEY = "isadora_fsfi_greene";
+const STORAGE_KEY = "climaterio_fsfi_greene";
 
 function saveState() {
   try {
@@ -1173,10 +1204,16 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   state.fsfi = {};
   state.greene = {};
   state.notes = "";
+  state.name = "";
+  state.dob = "";
+  state.menstrualStatus = "";
   saveState();
   renderFSFIOptions();
   renderGreene();
   document.getElementById('clinical-notes').value = "";
+  document.getElementById('patientName').value = "";
+  document.getElementById('patientDOB').value = "";
+  document.getElementById('menstrualStatus').value = "";
   updateProgress();
 });
 
@@ -1190,6 +1227,21 @@ document.getElementById('fillDate').addEventListener('change', (e) => {
   saveState();
 });
 
+document.getElementById('patientName').addEventListener('input', (e) => {
+  state.name = e.target.value;
+  saveState();
+});
+
+document.getElementById('patientDOB').addEventListener('change', (e) => {
+  state.dob = e.target.value;
+  saveState();
+});
+
+document.getElementById('menstrualStatus').addEventListener('change', (e) => {
+  state.menstrualStatus = e.target.value;
+  saveState();
+});
+
 // ════════════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════════════
@@ -1198,6 +1250,9 @@ loadState();
 renderFSFIOptions();
 renderGreene();
 document.getElementById('clinical-notes').value = state.notes || "";
+document.getElementById('patientName').value = state.name || "";
+document.getElementById('patientDOB').value = state.dob || "";
+document.getElementById('menstrualStatus').value = state.menstrualStatus || "";
 if (state.date) {
   document.getElementById('fillDate').value = state.date;
 } else {
